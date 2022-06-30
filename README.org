@@ -1,0 +1,45 @@
+
+* Supported Features
+
+** Convert .flac extensions in playlists to m4a
+#+begin_src sh :tangle yes
+--flac_ext_to_alac # Default = True
+#+end_src
+
+* Run
+** Write to output dir
+#+begin_src sh :tangle yes
+python foo_tunes.py -i=/Volumes/drive/playlists/windows --verbose -o=temp
+#+end_src
+
+#+begin_src sh :tangle yes
+./foo_tunes.py -i=/Volumes/bebe/playlists/windows --verbose -o=temp2
+#+end_src
+
+** To overwrite files
+#+begin_src sh :tangle yes
+./foo_tunes.py -i=/Volumes/bebe/playlists/windows --verbose
+#+end_src
+
+* Test
+#+begin_src sh :tangle yes
+python -m foo_tunes_test
+#+end_src
+
+* Random Foobar Notes
+** Rename Pattern
+#+begin_src text :tangle yes
+%album artist% - %album%[ '('%date%')'] '['$if($strstr(%codec%,FLAC),FLAC,$if($strstr(%__codec_profile%,CBR),%__bitrate%,V0))']'/%tracknumber%. [%artist% - ]%title%
+#+end_src
+** Directory Style
+#+begin_src text :tangle yes
+%genre%/%artist%/%album%/%tracknumber% %title%
+#+end_src
+** Exporting all Playlists
+#+begin_src text :tangle yes
+View -> Playlist Manager -> Right Click -> Save all Playlists -> m3u8
+
+There are a few entries for Playlist Manager, choose the last one.
+
+Save to: e.g. X:\playlists\windows
+#+end_src
