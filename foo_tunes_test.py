@@ -15,6 +15,17 @@ class FooTunesTest(unittest.TestCase):
                 r'X:\music\K-Pop\TWICE\#TWICE\08 TT.Flac'),
             r'X:\music\K-Pop\TWICE\#TWICE\08 TT.m4a')
 
+    def test_windows_path_to_posix(self):
+        self.assertEqual(
+            foo_tunes.windows_path_to_posix(
+                r'X:\music\K-Pop\TWICE\#TWICE\10 SIGNAL.m4a'),
+            'X:/music/K-Pop/TWICE/#TWICE/10 SIGNAL.m4a')
+
+        self.assertEqual(
+            foo_tunes.windows_path_to_posix(
+                r'X:\music\K-Pop\GFRIEND\Parallel\06 빨간우산 (RED UMBRELLA).m4a'),
+            r'X:/music/K-Pop/GFRIEND/Parallel/06 빨간우산 (RED UMBRELLA).m4a')
+
     def test_get_write_path(self):
         self.assertEqual(
             foo_tunes.get_write_path("/", "~/file.m3u"), Path("/file.m3u"))

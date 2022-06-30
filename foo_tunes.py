@@ -2,7 +2,7 @@
 
 import glob, os, logging, argparse
 
-from pathlib import Path
+from pathlib import Path, PurePosixPath, PureWindowsPath
 from typing import List
 
 
@@ -16,11 +16,17 @@ parser.add_argument('-v', '--verbose', default=False, action="store_true",
 parser.add_argument('--flac_ext_to_alac', default=True, action="store_true",
                     help="Change .flac extension to .m4a in playlists.")
 
+parser.add_argument('--windows_to_posix', default=False, action="store_true",
+                    help="Convert music paths in playlist to posix format.")
+
 parser.add_argument('--dry', default=False, action="store_true",
                     help="If set, don't write any new changes.")
 
 def flac_extension_to_alac(song: str) -> str:
     return song.replace(".flac", ".m4a").replace(".Flac", ".m4a")
+
+def windows_path_to_posix(song: str) -> str:
+    return str(PureWindowsPath(song).as_posix())
 
 def get_write_path(output_dir: str, file: str) -> Path:
     base_name = os.path.basename(file)
@@ -89,8 +95,11 @@ class FooTunes:
 
     def convert_extension_flac_to_alac(self):
         for playlist in self.playlists:
-            songs = list(map(flac_extension_to_alac, playlist.songs))
-            playlist.songs = songs
+            playlist.songs = list(map(flac_extension_to_alac, playlist.songs))
+
+    def convert_windows_to_posix(self):
+        for playlist in self.playlists:
+            playlist.songs = list(map(windows_path_to_posix, playlist.songs))
 
 def main():
     global DRY, VERBOSE
@@ -98,6 +107,7 @@ def main():
     input_dir = os.path.abspath(args.input_dir)
     output_dir = os.path.abspath(args.output_dir) if args.output_dir else None
     flac_ext_to_alac = args.flac_ext_to_alac
+    windows_to_posix = args.windows_to_posix
     VERBOSE = args.verbose
     DRY = args.dry
 
@@ -105,7 +115,7 @@ def main():
         print('Input: ', input_dir)
         print('Output: ', output_dir)
 
-    if not flac_ext_to_alac:
+    if not flac_ext_to_alac and not windows_to_posix:
         print('Need to specify action... e.g. --flac_ext_to_alac')
         return
 
@@ -114,6 +124,8 @@ def main():
         foo_tunes.read()
         if flac_ext_to_alac:
             foo_tunes.convert_extension_flac_to_alac()
+        if windows_to_posix:
+            foo_tunes.convert_windows_to_posix()
         foo_tunes.write()
     except KeyboardInterrupt:
         print("Done...")

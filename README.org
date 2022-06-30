@@ -6,6 +6,11 @@
 --flac_ext_to_alac # Default = True
 #+end_src
 
+** Convert Windows paths to Posix (Linux/OSX) paths
+#+begin_src sh :tangle yes
+--windows_to_posix # Default = False
+#+end_src
+
 * Run
 ** Write to output dir
 #+begin_src sh :tangle yes
