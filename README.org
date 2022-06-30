@@ -32,6 +32,19 @@ python -m foo_tunes_test
 #+end_src
 
 * Random Foobar Notes
+** Changing Music Directory Path
+For example, say the original media library was on J:/ and the new media library
+is on X:/, you can Go to File -> Preferences -> Music Library -> Music Folders
+-> Add -> Add new Path.
+
+Let Foobar2000 populate all the music files from the new path. There will be
+duplicates until this whole process is finished. Once Foobar's music folder
+status is 'Monitoring', Use Playlist Revive.
+
+Go to each playlist -> Edit -> Revive Dead Items.
+
+This should point all the paths to the new path at the new music directory
+location.
 ** Rename Pattern
 #+begin_src text :tangle yes
 %album artist% - %album%[ '('%date%')'] '['$if($strstr(%codec%,FLAC),FLAC,$if($strstr(%__codec_profile%,CBR),%__bitrate%,V0))']'/%tracknumber%. [%artist% - ]%title%
@@ -48,3 +61,5 @@ There are a few entries for Playlist Manager, choose the last one.
 
 Save to: e.g. X:\playlists\windows
 #+end_src
+* Workflow
+Make all music directories follow: [[*Directory Style][Directory Style]].
