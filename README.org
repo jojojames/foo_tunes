@@ -1,9 +1,19 @@
 
-* Supported Features
+* Playlist Modifications
 
-** Convert .flac extensions in playlists to m4a
+** Convert .flac extensions to m4a
 #+begin_src sh :tangle yes
   --flac_ext_to_alac # Default = False
+#+end_src
+
+*** Example
+# In some playlist.m3u...
+#+begin_src text :tangle yes
+  X:\music\Pop\Taylor Swift\Lover\08 Paper Rings.flac
+
+  to:
+
+  X:\music\Pop\Taylor Swift\Lover\08 Paper Rings.m4a
 #+end_src
 
 ** Convert Windows paths to Posix (Linux/OSX) paths
@@ -11,37 +21,60 @@
   --windows_to_posix # Default = False
 #+end_src
 
+*** Example
+#+begin_src text :tangle yes
+  X:\music\K-Pop\BTS\Butter\01 Butter.m4a
+
+  to:
+
+  X:/music/K-Pop/BTS/Butter/01 Butter.m4a
+#+end_src
+
 ** Convert common text in every line in Playlist
 This is useful for changing drive paths or changing root directories from
 Windows to OSX, etc.
 
 #+begin_src sh :tangle yes
---from_str
---to_str
+  --from_str
+  --to_str
 #+end_src
+*** Example
+
+#+begin_src text :tangle yes
+  --from_str=X:/music
+  --to_str=/Users/james/Music
+
+    X:/music/K-Pop/IU/Love poem/03 Blueming.m4a
+
+  to:
+
+    /Users/james/Music/K-Pop/IU/Love poem/03 Blueming.m4a
+#+end_src
+
+
 * Run
 ** Write to output dir
 #+begin_src sh :tangle yes
-  python foo_tunes.py -i=/Volumes/drive/playlists/windows --verbose -o=temp
+  python foo_tunes.py -i=/Volumes/drive/playlists/windows --verbose -o=temp  --flac_ext_to_alac
 #+end_src
 
 #+begin_src sh :tangle yes
-  ./foo_tunes.py -i=/Volumes/bebe/playlists/windows --verbose -o=temp2
+  ./foo_tunes.py -i=/Volumes/bebe/playlists/windows --verbose -o=temp2  --flac_ext_to_alac
 #+end_src
 
 ** To overwrite files
 #+begin_src sh :tangle yes
-  ./foo_tunes.py -i=/Volumes/bebe/playlists/windows --verbose
+  ./foo_tunes.py -i=/Volumes/bebe/playlists/windows --verbose  --flac_ext_to_alac
 #+end_src
 
 ** Change some text in every line
 #+begin_src sh :tangle yes
-./foo_tunes.py -i=/Volumes/bebe/playlists/windows/ --from_str='X:\music' --to_str='Y:\music'
+  ./foo_tunes.py -i=/Volumes/bebe/playlists/windows/ --from_str='X:\music' --to_str='Y:\music'
 #+end_src
 
 ** Random commands
 #+begin_src sh :tangle yes
-./foo_tunes.py -i=/Volumes/bebe/playlists/windows/ --verbose -o=temp8 --from_str='X:/music' --to_str='/Users/james/Music' --windows_to_posix --flac_ext_to_alac
+  ./foo_tunes.py -i=/Volumes/bebe/playlists/windows/ --verbose -o=temp8 --from_str='X:/music' --to_str='/Users/james/Music' --windows_to_posix --flac_ext_to_alac
 #+end_src
 * Test
 #+begin_src sh :tangle yes
