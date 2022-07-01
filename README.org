@@ -3,35 +3,43 @@
 
 ** Convert .flac extensions in playlists to m4a
 #+begin_src sh :tangle yes
---flac_ext_to_alac # Default = True
+  --flac_ext_to_alac # Default = True
 #+end_src
 
 ** Convert Windows paths to Posix (Linux/OSX) paths
 #+begin_src sh :tangle yes
---windows_to_posix # Default = False
+  --windows_to_posix # Default = False
 #+end_src
 
 * Run
 ** Write to output dir
 #+begin_src sh :tangle yes
-python foo_tunes.py -i=/Volumes/drive/playlists/windows --verbose -o=temp
+  python foo_tunes.py -i=/Volumes/drive/playlists/windows --verbose -o=temp
 #+end_src
 
 #+begin_src sh :tangle yes
-./foo_tunes.py -i=/Volumes/bebe/playlists/windows --verbose -o=temp2
+  ./foo_tunes.py -i=/Volumes/bebe/playlists/windows --verbose -o=temp2
 #+end_src
 
 ** To overwrite files
 #+begin_src sh :tangle yes
-./foo_tunes.py -i=/Volumes/bebe/playlists/windows --verbose
+  ./foo_tunes.py -i=/Volumes/bebe/playlists/windows --verbose
 #+end_src
 
 * Test
 #+begin_src sh :tangle yes
-python -m foo_tunes_test
+  python -m foo_tunes_test
 #+end_src
 
 * Random Foobar Notes
+** Query Syntax
+https://wiki.hydrogenaud.io/index.php?title=Foobar2000:Query_syntax
+** How to create Autoplaylist?
+https://hydrogenaud.io/index.php?topic=92694.0
+
+#+begin_src text :tangle yes
+  Library -> Album List -> (right click an album) -> Create Autoplaylist
+#+end_src
 ** Changing Music Directory Path
 For example, say the original media library was on J:/ and the new media library
 is on X:/, you can Go to File -> Preferences -> Music Library -> Music Folders
@@ -47,19 +55,26 @@ This should point all the paths to the new path at the new music directory
 location.
 ** Rename Pattern
 #+begin_src text :tangle yes
-%album artist% - %album%[ '('%date%')'] '['$if($strstr(%codec%,FLAC),FLAC,$if($strstr(%__codec_profile%,CBR),%__bitrate%,V0))']'/%tracknumber%. [%artist% - ]%title%
+  %album artist% - %album%[ '('%date%')'] '['$if($strstr(%codec%,FLAC),FLAC,$if($strstr(%__codec_profile%,CBR),%__bitrate%,V0))']'/%tracknumber%. [%artist% - ]%title%
 #+end_src
 ** Directory Style
 #+begin_src text :tangle yes
-%genre%/%artist%/%album%/%tracknumber% %title%
+  %genre%/%album artist%/%album%/%tracknumber% %title%
 #+end_src
+
+** Playback Statistics
+Write statistics to file tags.
+Import statistics from file tags.
+
+This is for play count, rating, etc.
+
 ** Exporting all Playlists
 #+begin_src text :tangle yes
-View -> Playlist Manager -> Right Click -> Save all Playlists -> m3u8
+  View -> Playlist Manager -> Right Click -> Save all Playlists -> m3u8
 
-There are a few entries for Playlist Manager, choose the last one.
+  There are a few entries for Playlist Manager, choose the last one.
 
-Save to: e.g. X:\playlists\windows
+  Save to: e.g. X:\playlists\windows
 #+end_src
 * Workflow
 Make all music directories follow: [[*Directory Style][Directory Style]].

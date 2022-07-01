@@ -66,7 +66,7 @@ class Playlist:
                 for each in self.songs:
                     f.write(each + "\n")
 
-        if VERBOSE:
+        if VERBOSE or DRY:
             print('Wrote: ', playlist_path)
 
 
