@@ -3,7 +3,7 @@
 
 ** Convert .flac extensions in playlists to m4a
 #+begin_src sh :tangle yes
-  --flac_ext_to_alac # Default = True
+  --flac_ext_to_alac # Default = False
 #+end_src
 
 ** Convert Windows paths to Posix (Linux/OSX) paths
@@ -11,6 +11,14 @@
   --windows_to_posix # Default = False
 #+end_src
 
+** Convert common text in every line in Playlist
+This is useful for changing drive paths or changing root directories from
+Windows to OSX, etc.
+
+#+begin_src sh :tangle yes
+--from_str
+--to_str
+#+end_src
 * Run
 ** Write to output dir
 #+begin_src sh :tangle yes
@@ -26,6 +34,15 @@
   ./foo_tunes.py -i=/Volumes/bebe/playlists/windows --verbose
 #+end_src
 
+** Change some text in every line
+#+begin_src sh :tangle yes
+./foo_tunes.py -i=/Volumes/bebe/playlists/windows/ --from_str='X:\music' --to_str='Y:\music'
+#+end_src
+
+** Random commands
+#+begin_src sh :tangle yes
+./foo_tunes.py -i=/Volumes/bebe/playlists/windows/ --verbose -o=temp8 --from_str='X:/music' --to_str='/Users/james/Music' --windows_to_posix --flac_ext_to_alac
+#+end_src
 * Test
 #+begin_src sh :tangle yes
   python -m foo_tunes_test
@@ -76,5 +93,12 @@ This is for play count, rating, etc.
 
   Save to: e.g. X:\playlists\windows
 #+end_src
-* Workflow
-Make all music directories follow: [[*Directory Style][Directory Style]].
+* Converting all FLAC to ALAC
+
+1. Make all music directories follow: [[*Directory Style][Directory Style]].
+2. Write all playback statistics to file tags.
+3. Export all playlists and convert them to use .m4a extension endings.
+4. Convert files in Foobar from FLAC to ALAC.
+Right click -> Convert -> FLAC to ALAC
+5. Import playlists with the m4a endings, delete original playlists.
+File -> Load Playlist -> Select all Playlists

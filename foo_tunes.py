@@ -2,6 +2,7 @@
 
 import glob, os, logging, argparse
 
+from functools import partial
 from pathlib import Path, PurePosixPath, PureWindowsPath
 from typing import List
 
@@ -13,11 +14,14 @@ parser.add_argument('-o', '--output_dir', default=None)
 parser.add_argument('-v', '--verbose', default=False, action="store_true",
                     help="Verbose logging.")
 
-parser.add_argument('--flac_ext_to_alac', default=True, action="store_true",
+parser.add_argument('--flac_ext_to_alac', default=False, action="store_true",
                     help="Change .flac extension to .m4a in playlists.")
 
 parser.add_argument('--windows_to_posix', default=False, action="store_true",
                     help="Convert music paths in playlist to posix format.")
+
+parser.add_argument('--from_str', help='String in playlist line to replace.')
+parser.add_argument('--to_str', help='String in playlist line to replace to.')
 
 parser.add_argument('--dry', default=False, action="store_true",
                     help="If set, don't write any new changes.")
@@ -37,9 +41,12 @@ def get_write_path(output_dir: str, file: str) -> Path:
                                                       base_name))
     return Path(playlist_path)
 
+def from_str_to_str(song: str, from_str: str, to_str: str) -> str:
+    return song.replace(from_str, to_str)
+
 class Playlist:
 
-    def __init__(self, file):
+    def __init__(self, file: str):
         self.file = file
         self.songs = None
 
@@ -80,6 +87,7 @@ class FooTunes:
         playlist_glob = os.path.join(self.input_dir, '*.m3u8')
         if VERBOSE:
             print("Globbing for: ", playlist_glob)
+
         playlist_files = glob.glob(playlist_glob)
         for playlist_file in playlist_files:
             playlist: Playlist = Playlist(playlist_file)
@@ -101,6 +109,12 @@ class FooTunes:
         for playlist in self.playlists:
             playlist.songs = list(map(windows_path_to_posix, playlist.songs))
 
+    def convert_from_str_to_str(self, from_str: str, to_str: str):
+        from_str_to_str_fn = partial(from_str_to_str,
+                                     from_str=from_str, to_str=to_str)
+        for playlist in self.playlists:
+            playlist.songs = list(map(from_str_to_str_fn, playlist.songs))
+
 def main():
     global DRY, VERBOSE
     args = parser.parse_args()
@@ -108,6 +122,8 @@ def main():
     output_dir = os.path.abspath(args.output_dir) if args.output_dir else None
     flac_ext_to_alac = args.flac_ext_to_alac
     windows_to_posix = args.windows_to_posix
+    from_str = args.from_str
+    to_str = args.to_str
     VERBOSE = args.verbose
     DRY = args.dry
 
@@ -126,6 +142,9 @@ def main():
             foo_tunes.convert_extension_flac_to_alac()
         if windows_to_posix:
             foo_tunes.convert_windows_to_posix()
+        if from_str and to_str:
+            foo_tunes.convert_from_str_to_str(from_str=from_str,
+                                              to_str=to_str)
         foo_tunes.write()
     except KeyboardInterrupt:
         print("Done...")

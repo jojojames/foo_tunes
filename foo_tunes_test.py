@@ -19,7 +19,7 @@ class FooTunesTest(unittest.TestCase):
         self.assertEqual(
             foo_tunes.windows_path_to_posix(
                 r'X:\music\K-Pop\TWICE\#TWICE\10 SIGNAL.m4a'),
-            'X:/music/K-Pop/TWICE/#TWICE/10 SIGNAL.m4a')
+            r'X:/music/K-Pop/TWICE/#TWICE/10 SIGNAL.m4a')
 
         self.assertEqual(
             foo_tunes.windows_path_to_posix(
@@ -28,15 +28,23 @@ class FooTunesTest(unittest.TestCase):
 
     def test_get_write_path(self):
         self.assertEqual(
-            foo_tunes.get_write_path("/", "~/file.m3u"), Path("/file.m3u"))
+            foo_tunes.get_write_path('/', '~/file.m3u'), Path('/file.m3u'))
         self.assertEqual(
-            foo_tunes.get_write_path("/a/b/c", "~/file.m3u"),
-            Path("/a/b/c/file.m3u"))
+            foo_tunes.get_write_path('/a/b/c', '~/file.m3u'),
+            Path('/a/b/c/file.m3u'))
         self.assertEqual(
-            foo_tunes.get_write_path("~/a/b/c", "~/file.m3u"),
-            Path("~/a/b/c/file.m3u"))
+            foo_tunes.get_write_path('~/a/b/c', '~/file.m3u'),
+            Path('~/a/b/c/file.m3u'))
         self.assertEqual(
-            foo_tunes.get_write_path(None, "~/file.m3u"), Path("~/file.m3u"))
+            foo_tunes.get_write_path(None, '~/file.m3u'), Path('~/file.m3u'))
+
+    def test_from_str_to_str(self):
+        self.assertEqual(
+            foo_tunes.from_str_to_str(
+                r'X:/music/K-Pop/Younha/Cover/Gee.mp3',
+                r'X:/music',
+                r'/Users/james/Music'),
+            r'/Users/james/Music/K-Pop/Younha/Cover/Gee.mp3')
 
     # def test_upper(self):
     #     self.assertEqual('foo'.upper(), 'FOO')
