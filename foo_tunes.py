@@ -335,7 +335,8 @@ class FFMpeg:
 
         if VERBOSE:
             print_separator()
-            print('Flac files to convert: ', flac_files)
+            print(f'# of Flac files to convert: {len(flac_files)}')
+            print(f'Flac files to convert: {flac_files}')
             print_separator()
 
         self.flacs = flac_files
