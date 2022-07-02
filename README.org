@@ -58,8 +58,10 @@ Windows to OSX, etc.
 #+end_src
 ** Options:
 #+begin_src sh :tangle yes
+--flac_dir # Default = None
 --flac_overwrite_output # Default = False
 --flac_delete_original # Default = False
+--flac_convert_threads # Default = 4
 #+end_src
 * Run
 ** Write to output dir
@@ -101,14 +103,19 @@ https://hydrogenaud.io/index.php?topic=92694.0
 #+end_src
 ** Changing Music Directory Path
 For example, say the original media library was on J:/ and the new media library
-is on X:/, you can Go to File -> Preferences -> Music Library -> Music Folders
--> Add -> Add new Path.
+is on X:/
+
+#+begin_src text :tangle yes
+Go to File -> Preferences -> Music Library -> Music Folders -> Add -> Add new Path.
+#+end_src
 
 Let Foobar2000 populate all the music files from the new path. There will be
 duplicates until this whole process is finished. Once Foobar's music folder
 status is 'Monitoring', Use Playlist Revive.
 
+#+begin_src text :tangle yes
 Go to each playlist -> Edit -> Revive Dead Items.
+#+end_src
 
 This should point all the paths to the new path at the new music directory
 location.

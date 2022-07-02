@@ -4,12 +4,16 @@ import unittest
 
 from pathlib import Path
 
+from foo_tunes import Resilio
+
 class FooTunesTest(unittest.TestCase):
 
     def test_true_path(self):
         self.assertEqual(foo_tunes.true_path('~/abc'),
                          os.path.join(os.path.expanduser('~'), 'abc'))
         self.assertEqual(foo_tunes.true_path('/a/b/c'),
+                         '/a/b/c')
+        self.assertEqual(foo_tunes.true_path('/a/b/c/'),
                          '/a/b/c')
 
     def test_flac_extension_to_alac(self):
@@ -59,19 +63,15 @@ class FooTunesTest(unittest.TestCase):
         self.assertEqual(
             foo_tunes.alac_path_from_flac_path('/a/b/c.flac'), '/a/b/c.m4a')
 
-    # def test_upper(self):
-    #     self.assertEqual('foo'.upper(), 'FOO')
 
-    # def test_isupper(self):
-    #     self.assertTrue('FOO'.isupper())
-    #     self.assertFalse('Foo'.isupper())
-
-    # def test_split(self):
-    #     s = 'hello world'
-    #     self.assertEqual(s.split(), ['hello', 'world'])
-    #     # check that s.split fails when the separator is not a string
-    #     with self.assertRaises(TypeError):
-    #         s.split(2)
+class ResilioTest(unittest.TestCase):
+    def test_get_temp_directory(self):
+        self.assertEqual(
+            Resilio('/bebe/sync/').get_temp_directory(),
+            '/bebe/sync/.sync')
+        self.assertEqual(
+            Resilio('/bebe/sync').get_temp_directory(),
+            '/bebe/sync/.sync')
 
 if __name__ == '__main__':
     unittest.main()
