@@ -30,7 +30,7 @@ parser.add_argument('--flac_delete_original', default=False, action="store_true"
 parser.add_argument('--flac_convert_threads',
                     help='Number of threads to use when converting.')
 
-parser.add_argument('--manage', default=False, action="store_true",
+parser.add_argument('--jojo', default=False, action="store_true",
                     help='If set, manage music.')
 
 parser.add_argument('--dry', default=False, action="store_true",
@@ -453,7 +453,7 @@ def main():
     flac_overwrite_output = args.flac_overwrite_output
     flac_delete_original = args.flac_delete_original
     flac_convert_threads = args.flac_convert_threads
-    manage = args.manage
+    jojo = args.jojo
     VERBOSE = args.verbose
     DRY = args.dry
 
@@ -461,7 +461,7 @@ def main():
     MP4ART_AVAILABLE = which('mp4art')
     FFMPEG_AVAILABLE = which('ffmpeg')
 
-    if manage:
+    if jojo:
         music_manager = MusicManager()
         music_manager.run()
         return
@@ -479,7 +479,7 @@ def main():
         print('--flac_overwrite_output', flac_overwrite_output)
         print('--flac_delete_original', flac_delete_original)
         print('--flac_convert_threads', flac_convert_threads)
-        print('--manage', manage)
+        print('--jojo', jojo)
         print_separator()
 
     if not flac_ext_to_alac and not windows_to_posix and not flac_dir:
