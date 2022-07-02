@@ -27,7 +27,7 @@ parser.add_argument('--flac_overwrite_output', default=False, action="store_true
                     help='If set, always write new files with ffmpeg.')
 parser.add_argument('--flac_delete_original', default=False, action="store_true",
                     help='If set, delete .flac version after converting to alac.')
-parser.add_argument('--flac_convert_threads',
+parser.add_argument('--flac_convert_threads', default='4',
                     help='Number of threads to use when converting.')
 
 parser.add_argument('--jojo', default=False, action="store_true",
