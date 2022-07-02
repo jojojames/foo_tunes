@@ -461,7 +461,8 @@ def main():
     DRY = args.dry
 
     # https://stackoverflow.com/questions/11210104/check-if-a-program-exists-from-a-python-script
-    MP4ART_AVAILABLE = which('mp4art')
+    # Disable for now, wipes metadata...
+    MP4ART_AVAILABLE = False and which('mp4art')
     FFMPEG_AVAILABLE = which('ffmpeg')
 
     if jojo:
