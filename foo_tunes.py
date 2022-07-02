@@ -432,7 +432,7 @@ class FFMpeg:
                 os.remove(flac_path)
 
             if not MP4ART_AVAILABLE:
-                return
+                continue
 
             cover_image: Optional[Text] = self.get_cover_image(flac_path)
             if not cover_image:
