@@ -238,7 +238,8 @@ class MusicManager:
             print(f'{flac_dir} does not exist. Skipping convert and move...')
             return
 
-        music_dirs = os.listdir(flac_dir)
+        # Get list of directories to move that aren't hidden.
+        music_dirs = [f for f in os.listdir(flac_dir) if not f.startswith('.')]
         if len(music_dirs) == 0:
             print('No music directories to convert or move. Skipping.')
             return
