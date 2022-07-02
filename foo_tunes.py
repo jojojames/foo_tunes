@@ -267,7 +267,11 @@ class MusicManager:
         move_to = os.path.join(self.get_music_directory(), '_TO_PROCESS')
         if not os.path.exists(move_to):
             os.makedirs(move_to)
+
+        ds_store_pattern = re.compile('\.DS_Store')
         for music_dir in music_dirs:
+            if re.search(ds_store_pattern, music_dir):
+                continue
             from_dir = os.path.join(flac_dir, music_dir)
             to_dir = os.path.join(move_to, music_dir)
             move(from_dir, to_dir)
