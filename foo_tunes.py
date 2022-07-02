@@ -100,7 +100,7 @@ class Playlist:
             print('Wrote: ', playlist_path)
 
 
-class FooTunes:
+class PlaylistManager:
     def __init__(self, input_dir: str, output_dir: str):
         self.input_dir = input_dir
         self.output_dir = output_dir
@@ -201,6 +201,7 @@ class FFMpegWrapper:
                 if self.overwrite_output:
                     if VERBOSE:
                         print(f'{alac_path} already exists... deleting...')
+
                     os.remove(alac_path)
                 else:
                     if VERBOSE:
@@ -240,6 +241,7 @@ class FFMpegWrapper:
             if self.delete_original:
                 if VERBOSE:
                     print(f'Deleting {flac_path}...')
+
                 os.remove(flac_path)
 
             if not MP4ART_AVAILABLE:
@@ -313,16 +315,17 @@ def main():
             if not input_dir:
                 print('Specify --input_dir...')
                 return
-            foo_tunes = FooTunes(input_dir=input_dir, output_dir=output_dir)
-            foo_tunes.read()
+            playlist_manager = PlaylistManager(input_dir=input_dir,
+                                               output_dir=output_dir)
+            playlist_manager.read()
             if flac_ext_to_alac:
-                foo_tunes.convert_extension_flac_to_alac()
+                playlist_manager.convert_extension_flac_to_alac()
             if windows_to_posix:
-                foo_tunes.convert_windows_to_posix()
+                playlist_manager.convert_windows_to_posix()
             if from_str and to_str:
-                foo_tunes.convert_from_str_to_str(from_str=from_str,
-                                                  to_str=to_str)
-                foo_tunes.write()
+                playlist_manager.convert_from_str_to_str(from_str=from_str,
+                                                         to_str=to_str)
+                playlist_manager.write()
 
         if flac_dir:
             # https://stackoverflow.com/questions/11210104/check-if-a-program-exists-from-a-python-script
