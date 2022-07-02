@@ -515,6 +515,7 @@ def main():
                 print('mp4v2 available, will attempt to add cover art.')
             else:
                 # OSX: brew install mp4v2
+                # FreeBSD: sudo pkg install mp4v2
                 print('Installing mp4v2 [e.g. with $ brew install mp4v2] allows adding cover art')
 
             ffmpeg_wrapper = FFMpeg(input_dir=flac_dir,
