@@ -69,6 +69,26 @@ def alac_path_from_flac_path(flac_path: str):
     alac_path = os.path.join(directory, base_name + '.m4a')
     return alac_path
 
+def walk_files(directory: str) -> List[str]:
+    # https://stackoverflow.com/questions/19309667/recursive-os-listdir
+    return [os.path.join(dp, f)
+                 for dp, dn, fn in os.walk(os.path.expanduser(directory))
+                 for f in fn]
+
+def delete_some_trash(directory: str):
+    """Delete extraneous trash files that may corrupt entire process."""
+    files = walk_files(directory)
+
+    # E.g.
+    # ._file.flac
+    # /bebe/sync/music/._file.flac
+    resilio_trash_pattern = re.compile(r'(\._|^\._)')
+    for f in files:
+        if re.search(resilio_trash_pattern, f):
+            if VERBOSE:
+                print(f'Deleting trash {f}...')
+            os.remove(f)
+
 def print_separator():
     print('---------------------------------------------------------------')
 
@@ -221,6 +241,9 @@ class MusicManager:
             return r'/bebe/music'
 
     def run(self):
+        # Clean up trash first...
+        self.delete_some_trash(self.get_flac_directory())
+
         # Modify Foobar2000 m3u playlists with .flac entries to .alac.
         self.playlist_manager.read()
         self.playlist_manager.convert_extension_flac_to_alac()
@@ -298,10 +321,7 @@ class FFMpeg:
         if VERBOSE:
             print('Finding files recursive for: ', self.input_dir)
 
-        # https://stackoverflow.com/questions/19309667/recursive-os-listdir
-        files = [os.path.join(dp, f)
-                 for dp, dn, fn in os.walk(os.path.expanduser(self.input_dir))
-                 for f in fn]
+        files = walk_files(self.input_dir)
 
         flac_pattern = re.compile("\.flac$")
         Flac_pattern = re.compile("\.Flac$")

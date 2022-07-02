@@ -64,6 +64,27 @@ class FooTunesTest(unittest.TestCase):
         self.assertEqual(
             foo_tunes.alac_path_from_flac_path('/a/b/c.flac'), '/a/b/c.m4a')
 
+    def test_delete_some_trash(self):
+        flac_dir = os.path.join(os.path.dirname(__file__), 'testdata/flac_dir')
+
+        self.assertEqual(len(os.listdir(flac_dir)), 1)
+
+        foo_tunes.delete_some_trash(flac_dir)
+
+        # Assert nothing has been deleted because the current directory has no
+        # trash in it.
+        self.assertEqual(len(os.listdir(flac_dir)), 1)
+
+        trash_file = os.path.join(flac_dir, r'._01 Next Level.flac')
+        with open(trash_file, 'w') as f:
+            f.write('Create a new text file!')
+        self.assertEqual(len(os.listdir(flac_dir)), 2)
+
+        foo_tunes.delete_some_trash(flac_dir)
+
+        # Assert trash has been deleted.
+        self.assertEqual(len(os.listdir(flac_dir)), 1)
+
 
 class ResilioTest(unittest.TestCase):
     def test_get_temp_directory(self):
