@@ -52,6 +52,14 @@ Windows to OSX, etc.
 #+end_src
 
 
+* Convert Flac to Alac
+#+begin_src sh :tangle yes
+./foo_tunes.py --flac_dir=~/some-dir-with-flac-files --verbose
+#+end_src
+** Options:
+#+begin_src sh :tangle yes
+--flac_overwrite_output # Default = False
+#+end_src
 * Run
 ** Write to output dir
 #+begin_src sh :tangle yes
