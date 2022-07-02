@@ -1,9 +1,16 @@
+import os
 import foo_tunes
 import unittest
 
 from pathlib import Path
 
 class FooTunesTest(unittest.TestCase):
+
+    def test_true_path(self):
+        self.assertEqual(foo_tunes.true_path('~/abc'),
+                         os.path.join(os.path.expanduser('~'), 'abc'))
+        self.assertEqual(foo_tunes.true_path('/a/b/c'),
+                         '/a/b/c')
 
     def test_flac_extension_to_alac(self):
         self.assertEqual(
@@ -45,6 +52,12 @@ class FooTunesTest(unittest.TestCase):
                 r'X:/music',
                 r'/Users/james/Music'),
             r'/Users/james/Music/K-Pop/Younha/Cover/Gee.mp3')
+
+    def test_alac_path_from_flac_path(self):
+        self.assertEqual(
+            foo_tunes.alac_path_from_flac_path('~/a.flac'), '~/a.m4a')
+        self.assertEqual(
+            foo_tunes.alac_path_from_flac_path('/a/b/c.flac'), '/a/b/c.m4a')
 
     # def test_upper(self):
     #     self.assertEqual('foo'.upper(), 'FOO')
