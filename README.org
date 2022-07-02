@@ -59,6 +59,7 @@ Windows to OSX, etc.
 ** Options:
 #+begin_src sh :tangle yes
 --flac_overwrite_output # Default = False
+--flac_delete_original # Default = False
 #+end_src
 * Run
 ** Write to output dir

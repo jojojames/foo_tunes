@@ -28,6 +28,8 @@ parser.add_argument('--flac_dir',
                     help='If set, convert .flac files in this directory to .m4a.')
 parser.add_argument('--flac_overwrite_output', default=False, action="store_true",
                     help='If set, always write new files with ffmpeg.')
+parser.add_argument('--flac_delete_original', default=False, action="store_true",
+                    help='If set, delete .flac version after converting to alac.')
 
 parser.add_argument('--dry', default=False, action="store_true",
                     help="If set, don't write any new changes.")
@@ -138,13 +140,14 @@ class FooTunes:
 
 
 class FFMpegWrapper:
-    def __init__(self, input_dir: str, overwrite_output: bool):
+    def __init__(self, input_dir: str, overwrite_output: bool, delete_original: bool):
         self.input_dir = input_dir
         self.flacs = []
         self.queue = queue.Queue()
         self.threads = []
         self.thread_kill_event = threading.Event()
         self.overwrite_output = overwrite_output
+        self.delete_original = delete_original
 
     def read(self):
         if VERBOSE:
@@ -233,6 +236,12 @@ class FFMpegWrapper:
                 print("convert stderr: ", process.stderr)
                 print_separator()
 
+            # Should we try deleting even if we potentially skip converting?
+            if self.delete_original:
+                if VERBOSE:
+                    print(f'Deleting {flac_path}...')
+                os.remove(flac_path)
+
             if not MP4ART_AVAILABLE:
                 return
             cover_image: Optional[Text] = self.get_cover_image(flac_path)
@@ -277,6 +286,7 @@ def main():
     to_str = args.to_str
     flac_dir = true_path(args.flac_dir)
     flac_overwrite_output = args.flac_overwrite_output
+    flac_delete_original = args.flac_delete_original
     VERBOSE = args.verbose
     DRY = args.dry
 
@@ -291,6 +301,7 @@ def main():
         print('--flac_dir:', flac_dir)
         print('--dry:', DRY)
         print('--flac_overwrite_output', flac_overwrite_output)
+        print('--flac_delete_original', flac_delete_original)
         print_separator()
 
     if not flac_ext_to_alac and not windows_to_posix and not flac_dir:
@@ -328,7 +339,8 @@ def main():
                 MP4ART_AVAILABLE = True
 
             ffmpeg_wrapper = FFMpegWrapper(input_dir=flac_dir,
-                                           overwrite_output=flac_overwrite_output)
+                                           overwrite_output=flac_overwrite_output,
+                                           delete_original=flac_delete_original)
             ffmpeg_wrapper.read()
             ffmpeg_wrapper.convert_flacs_to_alac()
 
