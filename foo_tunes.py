@@ -5,7 +5,7 @@ import glob, os, logging, argparse, re, queue, threading, subprocess, time
 from functools import partial
 from pathlib import Path, PurePosixPath, PureWindowsPath
 from shutil import which
-from typing import List
+from typing import List, Optional, Text
 
 
 parser = argparse.ArgumentParser(description='Foobar2000 -> iTunes utilities')
@@ -26,6 +26,8 @@ parser.add_argument('--to_str', help='String in playlist line to replace to.')
 
 parser.add_argument('--flac_dir',
                     help='If set, convert .flac files in this directory to .m4a.')
+parser.add_argument('--flac_overwrite_output', default=False, action="store_true",
+                    help='If set, always write new files with ffmpeg.')
 
 parser.add_argument('--dry', default=False, action="store_true",
                     help="If set, don't write any new changes.")
@@ -136,17 +138,19 @@ class FooTunes:
 
 
 class FFMpegWrapper:
-    def __init__(self, input_dir: str):
+    def __init__(self, input_dir: str, overwrite_output: bool):
         self.input_dir = input_dir
         self.flacs = []
         self.queue = queue.Queue()
         self.threads = []
         self.thread_kill_event = threading.Event()
+        self.overwrite_output = overwrite_output
 
     def read(self):
         if VERBOSE:
             print('Finding files recursive for: ', self.input_dir)
-            # https://stackoverflow.com/questions/19309667/recursive-os-listdir
+
+        # https://stackoverflow.com/questions/19309667/recursive-os-listdir
         files = [os.path.join(dp, f)
                  for dp, dn, fn in os.walk(os.path.expanduser(self.input_dir))
                  for f in fn]
@@ -165,6 +169,16 @@ class FFMpegWrapper:
 
         self.flacs = flac_files
 
+    def get_cover_image(self, path: str) -> Optional[Text]:
+        possible_cover_image_names = ['cover.jpg']
+
+        for cover_image_name in possible_cover_image_names:
+            path: Text = os.path.join(os.path.dirname(path), cover_image_name)
+            if os.path.exists(path):
+                return path
+
+        return None
+
     def convert_worker(self):
         while not self.thread_kill_event.is_set():
             try:
@@ -181,39 +195,30 @@ class FFMpegWrapper:
             print_separator()
 
             if os.path.exists(alac_path):
-                # print('{} already exists... skipping...', alac_path)
-                print('{} already exists... deleting...', alac_path)
-                os.remove(alac_path)
-                continue
+                if self.overwrite_output:
+                    print('{} already exists... deleting...', alac_path)
+                    os.remove(alac_path)
+                else:
+                    print('{} already exists... skipping...', alac_path)
+                    continue
+
+            # Adding cover art seems like it may not work when using -movflags.
+            # Without -movflags, none of the additional metadata is migrated though.
             process = subprocess.run(
                 # https://unix.stackexchange.com/questions/415477/lossless-audio-conversion-from-flac-to-alac-using-ffmpeg
                 ['ffmpeg',
-                 '-y', # 'overwrite output files'
                  # https://superuser.com/questions/326629/how-can-i-make-ffmpeg-be-quieter-less-verbose
-                 # '-v', 'verbose', # 'set logging level'
-                 '-v', 'info' if VERBOSE else 'warning'
-                 # https://superuser.com/questions/469650/converting-flac-to-alac-preserving-tags-in-a-script
-                 # The -vn switch will make ffmpeg ignore "video" parts of source file.
-                 # Also prevents this message from showing up:
-                 # Output file #0 does not contain any stream
-                 # '-vn',
+                 '-v', 'info' if VERBOSE else 'warning',
                  '-i', flac_path, # input file
-                 # 'force audio codec' to alac
-                 '-acodec', 'alac',
-                 # 'force video codec' to copy stream
-                 '-vcodec', 'copy',
-
-                 # '-map_metadata', '0', -'id3v2_version', '3', '-write_id3v1', '1',
-
-                 # '-metadata:s:v', 'title="Album cover"',
-                 # '-metadata:s:v', 'comment="Cover (front)"',
-
-                 # TODO: https://stackoverflow.com/questions/59725816/dealing-with-problems-in-flac-audio-files-with-ffmpeg
-
+                 '-acodec', 'alac', # 'force audio codec' to alac
+                 '-vcodec', 'copy', # 'force video codec' to copy stream
                  # For preserving extra metadata flags,
                  # e.g. replaygain, ALBUM, ARTIST, COMPOSER, ITUNESADVISORY etc.
+                 # https://superuser.com/questions/469650/converting-flac-to-alac-preserving-tags-in-a-script
+                 # https://stackoverflow.com/questions/59725816/dealing-with-problems-in-flac-audio-files-with-ffmpeg
                  # https://superuser.com/questions/523286/how-to-make-handbrake-preserve-capture-time-creation-time/523696#comment2528176_523696
                  # https://superuser.com/questions/996223/using-ffmpeg-to-copy-metadata-from-one-file-to-another
+                 '-map_metadata', '0',
                  '-movflags',
                  'use_metadata_tags',
                  alac_path], # 'output file'
@@ -225,6 +230,24 @@ class FFMpegWrapper:
                 print("convert stdout: ", process.stdout)
                 print("convert stderr: ", process.stderr)
                 print_separator()
+
+            if not MP4ART_AVAILABLE:
+                return
+            cover_image: Optional[Text] = self.get_cover_image(flac_path)
+            if not cover_image:
+                if VERBOSE:
+                    print('Cover image not found for:', flac_path)
+                return
+            art_process = subprocess.run(
+                # https://stackoverflow.com/questions/17798709/ffmpeg-how-to-embed-cover-art-image-to-m4a
+                ['mp4art', '--add', cover_image, alac_path],
+                capture_output=True, text=True)
+            if VERBOSE:
+                print_separator()
+                print("art stdout: ", art_process.stdout)
+                print("art stderr: ", art_process.stderr)
+                print_separator()
+
 
     def convert_flacs_to_alac(self):
         for flac_path in self.flacs:
@@ -242,7 +265,7 @@ class FFMpegWrapper:
 
 
 def main():
-    global DRY, VERBOSE
+    global DRY, VERBOSE, MP4ART_AVAILABLE
     args = parser.parse_args()
     input_dir = true_path(args.input_dir)
     output_dir = true_path(args.output_dir)
@@ -251,6 +274,7 @@ def main():
     from_str = args.from_str
     to_str = args.to_str
     flac_dir = true_path(args.flac_dir)
+    flac_overwrite_output = args.flac_overwrite_output
     VERBOSE = args.verbose
     DRY = args.dry
 
@@ -264,6 +288,7 @@ def main():
         print('--to_str:', to_str)
         print('--flac_dir:', flac_dir)
         print('--dry:', DRY)
+        print('--flac_overwrite_output', flac_overwrite_output)
         print_separator()
 
     if not flac_ext_to_alac and not windows_to_posix and not flac_dir:
@@ -291,7 +316,17 @@ def main():
             if which('ffmpeg') is None:
                 print('Install ffmpeg to use --flac_dir.')
                 return
-            ffmpeg_wrapper = FFMpegWrapper(input_dir=flac_dir)
+
+            if which('mp4art') is None:
+                # OSX: brew install mp4v2
+                print('Installing mp4v2 [e.g. with $ brew install mp4v2] allows adding cover art')
+                MP4ART_AVAILABLE = False
+            else:
+                print('mp4v2 available, will attempt to add cover art.')
+                MP4ART_AVAILABLE = True
+
+            ffmpeg_wrapper = FFMpegWrapper(input_dir=flac_dir,
+                                           overwrite_output=flac_overwrite_output)
             ffmpeg_wrapper.read()
             ffmpeg_wrapper.convert_flacs_to_alac()
 
