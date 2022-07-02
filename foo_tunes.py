@@ -154,15 +154,18 @@ class Resilio:
 
     def syncing(self):
         """Returns whether or not Resilio is currently syncing."""
-        sync_glob = os.path.join(self.get_temp_directory(), '*.!sync')
-        if VERBOSE:
-            print(f'Globbing for: {sync_glob}')
+        files = os.listdir(self.get_temp_directory())
 
-        sync_files = glob.glob(sync_glob)
-        if VERBOSE:
-            print(f'sync_files: {sync_files}')
+        sync_pattern = re.compile("\!\.sync$")
+        for file in files:
+            if VERBOSE:
+                print(f'Looking for sync pattern in {file}...')
+            if re.search(sync_pattern, file):
+                if VERBOSE:
+                    print(f'Found sync pattern {file}')
+                return True
 
-        return len(sync_files) > 0
+        return False
 
 class MusicManager:
     def __init__(self):

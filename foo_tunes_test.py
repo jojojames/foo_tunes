@@ -6,6 +6,7 @@ from pathlib import Path
 
 from foo_tunes import Resilio
 
+
 class FooTunesTest(unittest.TestCase):
 
     def test_true_path(self):
@@ -72,6 +73,21 @@ class ResilioTest(unittest.TestCase):
         self.assertEqual(
             Resilio('/bebe/sync').get_temp_directory(),
             '/bebe/sync/.sync')
+
+    def test_syncing(self):
+        sync_dir = os.path.join(os.path.dirname(__file__), 'testdata/sync')
+
+        resilio: Resilio = Resilio(sync_dir=sync_dir)
+        self.assertFalse(resilio.syncing())
+
+        sync_file = os.path.join(sync_dir, '.sync/abc.!.sync')
+        with open(sync_file, 'w') as f:
+            f.write('Create a new text file!')
+        self.assertTrue(resilio.syncing())
+
+        # Clean up file that we just created.
+        os.remove(sync_file)
+
 
 if __name__ == '__main__':
     foo_tunes.VERBOSE = True
