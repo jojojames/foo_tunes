@@ -219,6 +219,9 @@ class MusicManager:
     def get_osx_m3u_directory(self):
         return os.path.join(self.get_playlist_directory(), 'osx')
 
+    def get_bsd_m3u_directory(self):
+        return os.path.join(self.get_playlist_directory(), 'bsd')
+
     def get_sync_directory(self):
         if platform.system() == 'Windows':
             return r'X:\sync'
@@ -254,6 +257,12 @@ class MusicManager:
         self.playlist_manager.convert_windows_to_posix()
         self.playlist_manager.convert_from_str_to_str(
             from_str=r'X:/music', to_str=r'/Users/james/Music')
+        self.playlist_manager.write()
+
+        # Write the FreeBSD version deriving from the current list of playlists.
+        self.playlist_manager.output_dir = self.get_bsd_m3u_directory()
+        self.playlist_manager.convert_from_str_to_str(
+            from_str=r'/Users/james/Music', to_str=r'/bebe/music')
         self.playlist_manager.write()
 
         flac_dir = self.get_flac_directory()
