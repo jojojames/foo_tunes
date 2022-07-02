@@ -184,7 +184,7 @@ class MusicManager:
             return r'X:\playlists'
         if platform.system() == 'Darwin':
             return r'/Volumes/bebe/playlists'
-        if platform.system == 'FreeBSD':
+        if platform.system() == 'FreeBSD':
             return r'/bebe/playlists'
 
     def get_windows_m3u_directory(self):
@@ -201,7 +201,7 @@ class MusicManager:
             return r'X:\sync'
         if platform.system() == 'Darwin':
             return r'/Volumes/bebe/sync'
-        if platform.system == 'FreeBSD':
+        if platform.system() == 'FreeBSD':
             return r'/bebe/sync'
 
     def get_flac_directory(self):
@@ -209,7 +209,7 @@ class MusicManager:
             return r'X:\sync\flacsfor.me'
         if platform.system() == 'Darwin':
             return r'/Volumes/bebe/sync/flacsfor.me'
-        if platform.system == 'FreeBSD':
+        if platform.system() == 'FreeBSD':
             return r'/bebe/sync/flacsfor.me'
 
     def get_music_directory(self):
@@ -217,7 +217,7 @@ class MusicManager:
             return r'X:\music'
         if platform.system() == 'Darwin':
             return r'/Volumes/bebe/music'
-        if platform.system == 'FreeBSD':
+        if platform.system() == 'FreeBSD':
             return r'/bebe/music'
 
     def run(self):
