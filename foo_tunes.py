@@ -169,7 +169,6 @@ class Resilio:
 
 class MusicManager:
     def __init__(self):
-        VERBOSE = True
         self.resilio = Resilio(sync_dir=self.get_sync_directory())
 
         self.playlist_manager = PlaylistManager(
@@ -454,7 +453,7 @@ def main():
     flac_delete_original = args.flac_delete_original
     flac_convert_threads = args.flac_convert_threads
     jojo = args.jojo
-    VERBOSE = args.verbose
+    VERBOSE = args.verbose or jojo
     DRY = args.dry
 
     # https://stackoverflow.com/questions/11210104/check-if-a-program-exists-from-a-python-script
