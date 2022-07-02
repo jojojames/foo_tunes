@@ -244,9 +244,6 @@ class MusicManager:
             return r'/bebe/music'
 
     def run(self):
-        # Clean up trash first...
-        delete_some_trash(self.get_flac_directory())
-
         # Modify Foobar2000 m3u playlists with .flac entries to .alac.
         self.playlist_manager.read()
         self.playlist_manager.convert_extension_flac_to_alac()
@@ -323,6 +320,9 @@ class FFMpeg:
     def read(self):
         if VERBOSE:
             print('Finding files recursive for: ', self.input_dir)
+
+        # Clean up trash first...
+        delete_some_trash(self.input_dir)
 
         files = walk_files(self.input_dir)
 
