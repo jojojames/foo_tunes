@@ -30,6 +30,9 @@ parser.add_argument('--flac_delete_original', default=False, action="store_true"
 parser.add_argument('--flac_convert_threads', default='4',
                     help='Number of threads to use when converting.')
 
+parser.add_argument('--clean_up',
+                    help='If set, clean up this directory of extraneous files.')
+
 parser.add_argument('--jojo', default=False, action="store_true",
                     help='If set, manage music.')
 
@@ -242,7 +245,7 @@ class MusicManager:
 
     def run(self):
         # Clean up trash first...
-        self.delete_some_trash(self.get_flac_directory())
+        delete_some_trash(self.get_flac_directory())
 
         # Modify Foobar2000 m3u playlists with .flac entries to .alac.
         self.playlist_manager.read()
@@ -478,6 +481,7 @@ def main():
     flac_delete_original = args.flac_delete_original
     flac_convert_threads = args.flac_convert_threads
     jojo = args.jojo
+    clean_up = args.clean_up
     VERBOSE = args.verbose or jojo
     DRY = args.dry
 
@@ -504,8 +508,13 @@ def main():
         print('--flac_overwrite_output', flac_overwrite_output)
         print('--flac_delete_original', flac_delete_original)
         print('--flac_convert_threads', flac_convert_threads)
+        print('--clean_up', clean_up)
         print('--jojo', jojo)
         print_separator()
+
+    if clean_up:
+        print(f'Cleaning up {clean_up}')
+        delete_some_trash(clean_up)
 
     if not flac_ext_to_alac and not windows_to_posix and not flac_dir:
         print('Need to specify action... e.g. --flac_ext_to_alac')
