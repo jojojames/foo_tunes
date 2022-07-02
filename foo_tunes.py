@@ -173,9 +173,9 @@ class MusicManager:
             input_dir=self.get_windows_m3u_directory(),
             output_dir=self.get_alac_m3u_directory())
 
-        self.ffmpeg = FFMpegWrapper(input_dir=self.get_flac_directory(),
-                                    overwrite_output=True,
-                                    delete_original=False)
+        self.ffmpeg = FFMpeg(input_dir=self.get_flac_directory(),
+                             overwrite_output=True,
+                             delete_original=False)
 
     def get_playlist_directory(self):
         if platform.system() == 'Windows':
@@ -272,7 +272,7 @@ class MusicManager:
             print(f'Moved {from_dir} to {to_dir}...')
 
 
-class FFMpegWrapper:
+class FFMpeg:
     def __init__(self,
                  input_dir: str,
                  overwrite_output: bool,
@@ -390,6 +390,7 @@ class FFMpegWrapper:
                     print(f"FFMPEG: standard out: {process.stdout}")
                 if process.stderr.strip():
                     print(f'FFMPEG: {process.stderr}')
+
                 print_separator()
 
             # Should we try deleting even if we potentially skip converting?
@@ -510,10 +511,10 @@ def main():
                 # OSX: brew install mp4v2
                 print('Installing mp4v2 [e.g. with $ brew install mp4v2] allows adding cover art')
 
-            ffmpeg_wrapper = FFMpegWrapper(input_dir=flac_dir,
-                                           overwrite_output=flac_overwrite_output,
-                                           delete_original=flac_delete_original,
-                                           num_threads=int(flac_convert_threads))
+            ffmpeg_wrapper = FFMpeg(input_dir=flac_dir,
+                                    overwrite_output=flac_overwrite_output,
+                                    delete_original=flac_delete_original,
+                                    num_threads=int(flac_convert_threads))
             ffmpeg_wrapper.read()
             ffmpeg_wrapper.convert_flacs_to_alac()
 
