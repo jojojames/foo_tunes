@@ -74,4 +74,7 @@ class ResilioTest(unittest.TestCase):
             '/bebe/sync/.sync')
 
 if __name__ == '__main__':
+    foo_tunes.VERBOSE = True
+    foo_tunes.DRY = False
+    foo_tunes.MP4ART_AVAILABLE = True
     unittest.main()
