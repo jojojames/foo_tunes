@@ -196,10 +196,10 @@ class FFMpegWrapper:
 
             if os.path.exists(alac_path):
                 if self.overwrite_output:
-                    print('{} already exists... deleting...', alac_path)
+                    print(f'{alac_path} already exists... deleting...')
                     os.remove(alac_path)
                 else:
-                    print('{} already exists... skipping...', alac_path)
+                    print(f'{alac_path} already exists... skipping...')
                     continue
 
             # Adding cover art seems like it may not work when using -movflags.
