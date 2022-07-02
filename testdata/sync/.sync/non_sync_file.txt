@@ -1,0 +1,1 @@
+This file shouldn't trigger Resilio to think we're syncing.
