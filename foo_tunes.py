@@ -177,7 +177,7 @@ class MusicManager:
 
         self.ffmpeg = FFMpeg(input_dir=self.get_flac_directory(),
                              overwrite_output=True,
-                             delete_original=False)
+                             delete_original=True)
 
     def get_playlist_directory(self):
         if platform.system() == 'Windows':
