@@ -341,12 +341,12 @@ class MusicManager:
                     print('Observing changes...')
                 time.sleep(5)
         except:
+            print('Exception while looping...')
+        finally:
             self.playlist_observer.stop()
             self.converter_observer.stop()
-            print('Exception while looping...')
-
-        self.playlist_observer.join()
-        self.converter_observer.join()
+            self.playlist_observer.join()
+            self.converter_observer.join()
 
     def run(self):
         self.convert_playlists()
