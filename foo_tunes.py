@@ -519,6 +519,10 @@ class Converter:
                 os.remove(flac_path)
 
     def convert_flacs_to_alac(self):
+        if len(self.flacs) == 0:
+            if VERBOSE:
+                print('No flacs to convert... skipping conversion...')
+            return
         for flac_path in self.flacs:
             alac_path = alac_path_from_flac_path(flac_path=flac_path)
             self.queue.put((flac_path, alac_path))
