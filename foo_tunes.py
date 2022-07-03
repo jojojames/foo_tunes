@@ -24,7 +24,8 @@ parser.add_argument('--to_str', help='String in playlist line to replace to.')
 parser.add_argument('--flac_dir',
                     help='If set, convert .flac files in this directory to .m4a.')
 parser.add_argument('--flac_overwrite_output', default=False, action="store_true",
-                    help='If set, always write new files with ffmpeg.')
+                    help='If set, always write/overwrite output files'
+                    ' when converting.')
 parser.add_argument('--flac_delete_original', default=False, action="store_true",
                     help='If set, delete .flac version after converting to alac.')
 parser.add_argument('--flac_convert_threads', default='4',
@@ -90,6 +91,7 @@ def delete_some_trash(directory: str):
         if re.search(resilio_trash_pattern, f):
             if VERBOSE:
                 print(f'Deleting trash {f}...')
+
             os.remove(f)
 
 def print_separator():
@@ -198,9 +200,9 @@ class MusicManager:
             input_dir=self.get_windows_m3u_directory(),
             output_dir=self.get_alac_m3u_directory())
 
-        self.ffmpeg = FFMpeg(input_dir=self.get_flac_directory(),
-                             overwrite_output=True,
-                             delete_original=True)
+        self.converter = Converter(input_dir=self.get_flac_directory(),
+                                   overwrite_output=True,
+                                   delete_original=True)
 
     def get_playlist_directory(self):
         if platform.system() == 'Windows':
@@ -277,18 +279,18 @@ class MusicManager:
             return
 
         if self.resilio.syncing():
-            print('Resilio syncing... Skipping ffmpeg flac conversion...')
+            print('Resilio syncing... Skipping flac conversion...')
             return
 
         # Attempt to convert FLACs to ALACs.
-        print('Attempting ffmpeg flac conversion...')
+        print('Attempting flac conversion...')
         try:
-            self.ffmpeg.read()
-            self.ffmpeg.convert_flacs_to_alac()
-            print('ffmpeg finished converting...')
+            self.converter.read()
+            self.converter.convert_flacs_to_alac()
+            print('Finished converting...')
         except KeyboardInterrupt:
-            if self.ffmpeg:
-                self.ffmpeg.thread_kill_event.set()
+            if self.converter:
+                self.converter.thread_kill_event.set()
 
             print("Done...")
 
@@ -311,7 +313,7 @@ class MusicManager:
             print(f'Moved {from_dir} to {to_dir}...')
 
 
-class FFMpeg:
+class Converter:
     def __init__(self,
                  input_dir: str,
                  overwrite_output: bool,
@@ -504,16 +506,16 @@ def main():
                 print('Install ffmpeg or xld to use --flac_dir.')
                 return
 
-            ffmpeg_wrapper = FFMpeg(input_dir=flac_dir,
-                                    overwrite_output=flac_overwrite_output,
-                                    delete_original=flac_delete_original,
-                                    num_threads=int(flac_convert_threads))
-            ffmpeg_wrapper.read()
-            ffmpeg_wrapper.convert_flacs_to_alac()
+            converter = Converter(input_dir=flac_dir,
+                                  overwrite_output=flac_overwrite_output,
+                                  delete_original=flac_delete_original,
+                                  num_threads=int(flac_convert_threads))
+            converter.read()
+            converter.convert_flacs_to_alac()
 
     except KeyboardInterrupt:
-        if ffmpeg_wrapper:
-            ffmpeg_wrapper.thread_kill_event.set()
+        if converter:
+            converter.thread_kill_event.set()
             print("Done...")
 
 if __name__ == '__main__':
