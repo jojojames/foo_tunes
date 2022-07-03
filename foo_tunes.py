@@ -48,12 +48,15 @@ parser.add_argument('--m3u_to_str',
 
 parser.add_argument('--flac_dir',
                     help='If set, convert .flac files in this directory to .m4a.')
+
 parser.add_argument('--flac_overwrite_output', default=False, action="store_true",
                     help='If set, always write/overwrite output files'
                     ' when converting.')
+
 parser.add_argument('--flac_delete_original', default=False, action="store_true",
                     help='If set, delete .flac version after converting to alac.')
-parser.add_argument('--flac_convert_threads', default='4',
+
+parser.add_argument('--flac_threads', default='4',
                     help='Number of threads to use when converting.')
 
 ### Utility
@@ -583,7 +586,7 @@ def main():
     flac_dir = args.flac_dir
     flac_overwrite_output = args.flac_overwrite_output
     flac_delete_original = args.flac_delete_original
-    flac_convert_threads = args.flac_convert_threads
+    flac_threads = args.flac_threads
     jojo = args.jojo
     clean_up = args.clean_up
     VERBOSE = args.verbose or jojo
@@ -609,7 +612,7 @@ def main():
         print('--dry:', DRY)
         print('--flac_overwrite_output', flac_overwrite_output)
         print('--flac_delete_original', flac_delete_original)
-        print('--flac_convert_threads', flac_convert_threads)
+        print('--flac_threads', flac_threads)
         print('--clean_up', clean_up)
         print('--jojo', jojo)
         print_separator()
@@ -649,7 +652,7 @@ def main():
             converter = Converter(input_dir=flac_dir,
                                   overwrite_output=flac_overwrite_output,
                                   delete_original=flac_delete_original,
-                                  num_threads=int(flac_convert_threads))
+                                  num_threads=int(flac_threads))
             converter.read()
             converter.convert_flacs_to_alac()
 
