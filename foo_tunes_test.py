@@ -38,17 +38,19 @@ class FooTunesTest(unittest.TestCase):
                 r'X:\music\K-Pop\GFRIEND\Parallel\06 빨간우산 (RED UMBRELLA).m4a'),
             r'X:/music/K-Pop/GFRIEND/Parallel/06 빨간우산 (RED UMBRELLA).m4a')
 
-    def test_get_write_path(self):
+    def test_get_playlist_write_path(self):
         self.assertEqual(
-            foo_tunes.get_write_path('/', '~/file.m3u'), Path('/file.m3u'))
+            foo_tunes.get_playlist_write_path('/', '~/file.m3u'),
+            Path('/file.m3u'))
         self.assertEqual(
-            foo_tunes.get_write_path('/a/b/c', '~/file.m3u'),
+            foo_tunes.get_playlist_write_path('/a/b/c', '~/file.m3u'),
             Path('/a/b/c/file.m3u'))
         self.assertEqual(
-            foo_tunes.get_write_path('~/a/b/c', '~/file.m3u'),
+            foo_tunes.get_playlist_write_path('~/a/b/c', '~/file.m3u'),
             Path('~/a/b/c/file.m3u'))
         self.assertEqual(
-            foo_tunes.get_write_path(None, '~/file.m3u'), Path('~/file.m3u'))
+            foo_tunes.get_playlist_write_path(None, '~/file.m3u'),
+            Path('~/file.m3u'))
 
     def test_from_str_to_str(self):
         self.assertEqual(

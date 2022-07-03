@@ -2,10 +2,10 @@
 #+begin_src sh :tangle yes
 pip install watchdog
 #+end_src
-* Playlist Modifications
+* Managing Playlists / m3u8 files
 ** Convert .flac extensions to m4a
 #+begin_src sh :tangle yes
-  --flac_ext_to_alac # Default = False
+  --m3u_flac_ext_to_alac # Default = False
 #+end_src
 
 *** Example
@@ -20,7 +20,7 @@ pip install watchdog
 
 ** Convert Windows paths to Posix (Linux/OSX) paths
 #+begin_src sh :tangle yes
-  --windows_to_posix # Default = False
+  --m3u_windows_to_posix # Default = False
 #+end_src
 
 *** Example
@@ -37,14 +37,14 @@ This is useful for changing drive paths or changing root directories from
 Windows to OSX, etc.
 
 #+begin_src sh :tangle yes
-  --from_str
-  --to_str
+  --m3u_from_str
+  --m3u_to_str
 #+end_src
 *** Example
 
 #+begin_src text :tangle yes
-  --from_str=X:/music
-  --to_str=/Users/james/Music
+  --m3u_from_str=X:/music
+  --m3u_to_str=/Users/james/Music
 
     X:/music/K-Pop/IU/Love poem/03 Blueming.m4a
 
@@ -53,6 +53,26 @@ Windows to OSX, etc.
     /Users/james/Music/K-Pop/IU/Love poem/03 Blueming.m4a
 #+end_src
 
+** Using every flag
+
+#+begin_src sh :tangle yes
+python foo_tunes.py \
+-m3u_i=/Volumes/bebe/playlists/windows \
+-m3u_o=/Volumes/bebe/playlists/osx \
+--m3u_flac_to_alac \
+--m3u_windows_to_posix \
+--m3u_from_str='X:/music' \
+--m3u_to_str='/Users/james/Music' \
+--verbose
+#+end_src
+
+#+begin_src text :tangle yes
+  X:\music\J-Pop\Utada Hikaru\Distance\01 Wait & See.mp3
+
+  to:
+
+ /Users/james/Music/J-Pop/Utada Hikaru/Distance/01 Wait & See.mp3
+#+end_src
 
 * Convert Flac to Alac
 #+begin_src sh :tangle yes

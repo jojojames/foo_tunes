@@ -15,16 +15,34 @@ parser = argparse.ArgumentParser(description='Foobar2000 -> iTunes utilities')
 
 ### Playlist / .m3u8 Management
 
-parser.add_argument('-i', '--input_dir')
-parser.add_argument('-o', '--output_dir', default=None)
-parser.add_argument('--flac_ext_to_alac', default=False, action="store_true",
-                    help='Change .flac extension to .m4a in playlists.')
+parser.add_argument(
+    '-m3u_i',
+    '--m3u_input_dir',
+    help='Directory containing playlists/.m3u8 files to convert fron.')
 
-parser.add_argument('--windows_to_posix', default=False, action="store_true",
-                    help='Convert music paths in playlist to posix format.')
+parser.add_argument(
+    '-m3u_o',
+    '--m3u_output_dir',
+    default=None,
+    help='Directory containing converted playlists/.m3u8 files.')
 
-parser.add_argument('--from_str', help='String in playlist line to replace.')
-parser.add_argument('--to_str', help='String in playlist line to replace to.')
+parser.add_argument(
+    '--m3u_flac_to_alac',
+    default=False,
+    action="store_true",
+    help='Change .flac extension to .m4a in playlists.')
+
+parser.add_argument(
+    '--m3u_windows_to_posix',
+    default=False,
+    action="store_true",
+    help='Convert music paths in playlist to posix format.')
+
+parser.add_argument('--m3u_from_str',
+                    help='String in playlist line to replace.')
+
+parser.add_argument('--m3u_to_str',
+                    help='String in playlist line to replace to.')
 
 ### FLAC Conversion
 
@@ -66,10 +84,10 @@ def flac_extension_to_alac(song: str) -> str:
 def windows_path_to_posix(song: str) -> str:
     return str(PureWindowsPath(song).as_posix())
 
-def get_write_path(output_dir: str, file: str) -> Path:
+def get_playlist_write_path(m3u_output_dir: str, file: str) -> Path:
     base_name = os.path.basename(file)
-    if output_dir:
-        playlist_path = os.path.normpath(os.path.join(output_dir, base_name))
+    if m3u_output_dir:
+        playlist_path = os.path.normpath(os.path.join(m3u_output_dir, base_name))
     else:
         playlist_path = os.path.normpath(os.path.join(os.path.dirname(file),
                                                       base_name))
@@ -129,7 +147,8 @@ class Playlist:
         if not self.songs:
             self.read()
 
-        playlist_path = get_write_path(output_dir=output_dir, file=self.file)
+        playlist_path = get_playlist_write_path(m3u_output_dir=output_dir,
+                                                file=self.file)
         playlist_path.parent.mkdir(exist_ok=True, parents=True)
 
         if not DRY:
@@ -165,15 +184,23 @@ class PlaylistManager:
         for playlist in self.playlists:
             playlist.write(self.output_dir)
 
-    def convert_extension_flac_to_alac(self):
+    def convert_flac_to_alac(self):
+        if VERBOSE:
+            print('Converting m3u playlist extensions from .flac to .alac.')
         for playlist in self.playlists:
             playlist.songs = list(map(flac_extension_to_alac, playlist.songs))
 
     def convert_windows_to_posix(self):
+        if VERBOSE:
+            print('Converting m3u playlist from .windows to posix.')
         for playlist in self.playlists:
             playlist.songs = list(map(windows_path_to_posix, playlist.songs))
 
     def convert_from_str_to_str(self, from_str: str, to_str: str):
+        if VERBOSE:
+            print(f'Converting m3u playlist from {from_str} to {to_str}.')
+
+        # Create partial function with from_str and to_str already set.
         from_str_to_str_fn = partial(from_str_to_str,
                                      from_str=from_str, to_str=to_str)
         for playlist in self.playlists:
@@ -262,7 +289,7 @@ class MusicManager:
     def convert_playlists(self):
         # Modify Foobar2000 m3u playlists with .flac entries to .alac.
         self.playlist_manager.read()
-        self.playlist_manager.convert_extension_flac_to_alac()
+        self.playlist_manager.convert_flac_to_alac()
         self.playlist_manager.write()
 
         # Write the OSX version deriving from the current list of playlists.
@@ -547,12 +574,12 @@ def main():
 
     global DRY, FFMPEG_AVAILABLE, VERBOSE, XLD_AVAILABLE
     args = parser.parse_args()
-    input_dir = args.input_dir
-    output_dir = args.output_dir
-    flac_ext_to_alac = args.flac_ext_to_alac
-    windows_to_posix = args.windows_to_posix
-    from_str = args.from_str
-    to_str = args.to_str
+    m3u_input_dir = args.m3u_input_dir
+    m3u_output_dir = args.m3u_output_dir
+    m3u_flac_to_alac = args.m3u_flac_to_alac
+    m3u_windows_to_posix = args.m3u_windows_to_posix
+    m3u_from_str = args.m3u_from_str
+    m3u_to_str = args.m3u_to_str
     flac_dir = args.flac_dir
     flac_overwrite_output = args.flac_overwrite_output
     flac_delete_original = args.flac_delete_original
@@ -572,12 +599,12 @@ def main():
 
     if VERBOSE:
         print_separator()
-        print('--input_dir:', input_dir)
-        print('--output_dir:', output_dir)
-        print('--flac_ext_to_alac:', flac_ext_to_alac)
-        print('--windows_to_posix:', windows_to_posix)
-        print('--from_str:', from_str)
-        print('--to_str:', to_str)
+        print('--m3u_input_dir:', m3u_input_dir)
+        print('--m3u_output_dir:', m3u_output_dir)
+        print('--m3u_flac_to_alac:', m3u_flac_to_alac)
+        print('--m3u_windows_to_posix:', m3u_windows_to_posix)
+        print('--m3u_from_str:', m3u_from_str)
+        print('--m3u_to_str:', m3u_to_str)
         print('--flac_dir:', flac_dir)
         print('--dry:', DRY)
         print('--flac_overwrite_output', flac_overwrite_output)
@@ -591,26 +618,28 @@ def main():
         print(f'Cleaning up {clean_up}')
         delete_some_trash(clean_up)
 
-    if not flac_ext_to_alac and not windows_to_posix and not flac_dir:
-        print('Need to specify action... e.g. --flac_ext_to_alac')
+    if not m3u_flac_to_alac and not m3u_windows_to_posix and not flac_dir:
+        print('Need to specify action... e.g. --m3u_flac_to_alac')
         return
 
     try:
-        if flac_ext_to_alac or windows_to_posix or (from_str and to_str):
-            if not input_dir:
-                print('Specify --input_dir...')
+        if (m3u_flac_to_alac or m3u_windows_to_posix or
+            (m3u_from_str and m3u_to_str)):
+            if not m3u_input_dir:
+                print('Specify --m3u_input_dir...')
                 return
-            playlist_manager = PlaylistManager(input_dir=input_dir,
-                                               output_dir=output_dir)
+            playlist_manager = PlaylistManager(input_dir=m3u_input_dir,
+                                               output_dir=m3u_output_dir)
             playlist_manager.read()
-            if flac_ext_to_alac:
-                playlist_manager.convert_extension_flac_to_alac()
-            if windows_to_posix:
+            if m3u_flac_to_alac:
+                playlist_manager.convert_flac_to_alac()
+            if m3u_windows_to_posix:
                 playlist_manager.convert_windows_to_posix()
-            if from_str and to_str:
-                playlist_manager.convert_from_str_to_str(from_str=from_str,
-                                                         to_str=to_str)
-                playlist_manager.write()
+            if m3u_from_str and m3u_to_str:
+                playlist_manager.convert_from_str_to_str(from_str=m3u_from_str,
+                                                         to_str=m3u_to_str)
+
+            playlist_manager.write()
 
         if flac_dir:
             if not FFMPEG_AVAILABLE and not XLD_AVAILABLE:
