@@ -439,6 +439,8 @@ class Converter:
             try:
                 flac_path, alac_path = self.queue.get_nowait()
             except:
+                # Loop exits here when all threads exhaust self.queue.
+                print(f'Exiting worker thread...')
                 break
 
             print_separator()
