@@ -195,7 +195,7 @@ class PlaylistManager:
 
     def convert_windows_to_posix(self):
         if VERBOSE:
-            print('Converting m3u playlist from .windows to posix.')
+            print('Converting m3u playlist from Windows to Posix.')
         for playlist in self.playlists:
             playlist.songs = list(map(windows_path_to_posix, playlist.songs))
 
@@ -496,7 +496,7 @@ class FlacToAlacConverter:
                 flac_path, alac_path = self.queue.get_nowait()
             except:
                 # Loop exits here when all threads exhaust self.queue.
-                print(f'Exiting worker thread...')
+                print('Exiting worker thread...')
                 break
 
             print_separator()
@@ -560,7 +560,7 @@ class FlacToAlacConverter:
     def write(self):
         if len(self.flacs) == 0:
             if VERBOSE:
-                print('No flacs to convert... skipping conversion...')
+                print('No flacs to convert... skipping.')
             return
         for flac_path in self.flacs:
             alac_path = alac_path_from_flac_path(flac_path=flac_path)
@@ -634,16 +634,21 @@ def main():
                 return
             playlist_manager = PlaylistManager(input_dir=m3u_input_dir,
                                                output_dir=m3u_output_dir)
+            start = time.process_time()
             playlist_manager.read()
             if m3u_flac_to_alac:
                 playlist_manager.convert_flac_to_alac()
+                print(f'flac->alac, elapsed: {time.process_time() - start}')
             if m3u_windows_to_posix:
                 playlist_manager.convert_windows_to_posix()
+                print(f'windows->posix, elapsed: {time.process_time() - start}')
             if m3u_from_str and m3u_to_str:
                 playlist_manager.convert_from_str_to_str(from_str=m3u_from_str,
                                                          to_str=m3u_to_str)
+                print(f'str->str, elapsed: {time.process_time() - start}')
 
             playlist_manager.write()
+            print(f'Finished writing, elapsed: {time.process_time() - start}')
 
         if flac_dir:
             if not FFMPEG_AVAILABLE and not XLD_AVAILABLE:
