@@ -506,7 +506,7 @@ class FlacToAlacConverter:
         self.num_threads = num_threads
 
     def read(self):
-        print_if('Finding files recursive for: ', self.input_dir)
+        print_if('Finding files recursive for: {self.input_dir}')
 
         # Clean up trash first...
         delete_some_trash(self.input_dir)
