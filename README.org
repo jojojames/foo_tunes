@@ -210,3 +210,6 @@ $ sudo crontab -e
 */5 * * * * su james -c /bebe/script/foo_tunes/foo_tunes_tmux.sh >/bebe/script/foo_tunes/run.log 2>&1
 #+end_src
 
+#+begin_src sh :tangle yes
+$ tmux attach # To attach and view script output.
+#+end_src
