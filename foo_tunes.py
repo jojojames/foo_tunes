@@ -194,32 +194,6 @@ class Resilio:
 
         return False
 
-class PlaylistWatchHandler(FileSystemEventHandler):
-    """File System Watch Handler for playlist changes."""
-
-    def __init__(self, music_manager: MusicManager):
-        self.music_manager: MusicManager = music_manager
-
-    @staticmethod
-    def on_any_event(event):
-        if event.event_type == 'created':
-            if VERBOSE:
-                print(f'{event}!')
-            self.music_manager.convert_playlists()
-
-class ConverterWatchHandler(FileSystemEventHandler):
-    """File System Watch Handler for flac->alac changes."""
-
-    def __init__(self, music_manager: MusicManager):
-        self.music_manager: MusicManager = music_manager
-
-    @staticmethod
-    def on_any_event(event):
-        if event.event_type == 'created':
-            if VERBOSE:
-                print(f'{event}!')
-            self.music_manager.convert_and_move_flacs()
-
 class MusicManager:
     def __init__(self):
         self.resilio = Resilio(sync_dir=self.get_sync_directory())
@@ -378,6 +352,32 @@ class MusicManager:
         self.convert_playlists()
         self.convert_and_move_flacs()
         self.setup_file_watchers()
+
+class PlaylistWatchHandler(FileSystemEventHandler):
+    """File System Watch Handler for playlist changes."""
+
+    def __init__(self, music_manager: MusicManager):
+        self.music_manager: MusicManager = music_manager
+
+    @staticmethod
+    def on_any_event(event):
+        if event.event_type == 'created':
+            if VERBOSE:
+                print(f'{event}!')
+            self.music_manager.convert_playlists()
+
+class ConverterWatchHandler(FileSystemEventHandler):
+    """File System Watch Handler for flac->alac changes."""
+
+    def __init__(self, music_manager: MusicManager):
+        self.music_manager: MusicManager = music_manager
+
+    @staticmethod
+    def on_any_event(event):
+        if event.event_type == 'created':
+            if VERBOSE:
+                print(f'{event}!')
+            self.music_manager.convert_and_move_flacs()
 
 
 class Converter:
