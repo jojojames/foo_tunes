@@ -90,12 +90,12 @@ parser.add_argument('--jojo', default=False, action="store_true",
 parser.add_argument('-v', '--verbose', default=False, action="store_true",
                     help='Verbose logging.')
 
-def print_if(str: str):
+def print_if(str: str) -> None:
     """Print statement only if VERBOSE or DRY is set."""
     if VERBOSE or DRY:
         print(str)
 
-def true_path(path: str) -> str:
+def true_path(path: str) -> Optional[str]:
     # https://stackoverflow.com/questions/37863476/why-would-one-use-both-os-path-abspath-and-os-path-realpath
     if path is None:
         return None
@@ -119,7 +119,7 @@ def get_playlist_write_path(m3u_output_dir: str, file: str) -> Path:
 def from_str_to_str(song: str, from_str: str, to_str: str) -> str:
     return song.replace(from_str, to_str)
 
-def alac_path_from_flac_path(flac_path: str):
+def alac_path_from_flac_path(flac_path: str) -> Text:
     directory, file_name = os.path.split(flac_path)
     base_name, extension = os.path.splitext(file_name)
     alac_path = os.path.join(directory, base_name + '.m4a')
@@ -131,7 +131,7 @@ def walk_files(directory: str) -> List[str]:
                  for dp, dn, fn in os.walk(os.path.expanduser(directory))
                  for f in fn]
 
-def delete_some_trash(directory: str):
+def delete_some_trash(directory: str) -> None:
     """Delete extraneous trash files that may corrupt entire process."""
     files = walk_files(directory)
 
@@ -144,13 +144,13 @@ def delete_some_trash(directory: str):
             print_if(f'Deleting trash {f}...')
             os.remove(f)
 
-def print_separator():
+def print_separator() -> None:
     if VERBOSE:
         print('---------------------------------------------------------------')
 
 
 class Playlist:
-
+    """Class representing an m3u playlist."""
     def __init__(self, file: str):
         self.file = file
         self.songs = None
@@ -182,6 +182,7 @@ class Playlist:
 
 
 class PlaylistManager:
+    """Class that manages reading and writing Playlists."""
     def __init__(self, input_dir: str, output_dir: str):
         self.input_dir = true_path(input_dir)
         self.output_dir = true_path(output_dir)
