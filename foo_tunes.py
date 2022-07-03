@@ -361,6 +361,7 @@ class PlaylistWatchHandler(FileSystemEventHandler):
 
     @staticmethod
     def on_any_event(event):
+        print(f'Some {event}!!')
         if event.event_type == 'created':
             if VERBOSE:
                 print(f'{event}!')
@@ -374,6 +375,7 @@ class ConverterWatchHandler(FileSystemEventHandler):
 
     @staticmethod
     def on_any_event(event):
+        print(f'Some {event}!!')
         if event.event_type == 'created':
             if VERBOSE:
                 print(f'{event}!')
