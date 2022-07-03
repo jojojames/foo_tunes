@@ -241,9 +241,10 @@ class MusicManager:
             input_dir=self.get_windows_m3u_directory(),
             output_dir=self.get_alac_m3u_directory())
 
-        self.converter = Converter(input_dir=self.get_flac_directory(),
-                                   overwrite_output=True,
-                                   delete_original=True)
+        self.converter = FlacToAlacConverter(
+            input_dir=self.get_flac_directory(),
+            overwrite_output=True,
+            delete_original=True)
 
     def get_playlist_directory(self):
         if platform.system() == 'Windows':
@@ -328,7 +329,7 @@ class MusicManager:
         print('Attempting flac conversion...')
         try:
             self.converter.read()
-            self.converter.convert_flacs_to_alac()
+            self.converter.write()
             print('Finished converting...')
         except KeyboardInterrupt:
             if self.converter:
@@ -450,7 +451,7 @@ class ConverterWatchHandler(FileSystemEventHandler):
                     ConverterWatchHandler.timer.start()
 
 
-class Converter:
+class FlacToAlacConverter:
     def __init__(self,
                  input_dir: str,
                  overwrite_output: bool,
@@ -556,7 +557,7 @@ class Converter:
 
                 os.remove(flac_path)
 
-    def convert_flacs_to_alac(self):
+    def write(self):
         if len(self.flacs) == 0:
             if VERBOSE:
                 print('No flacs to convert... skipping conversion...')
@@ -649,12 +650,13 @@ def main():
                 print('Install ffmpeg or xld to use --flac_dir.')
                 return
 
-            converter = Converter(input_dir=flac_dir,
-                                  overwrite_output=flac_overwrite_output,
-                                  delete_original=flac_delete_original,
-                                  num_threads=int(flac_threads))
+            converter = FlacToAlacConverter(
+                input_dir=flac_dir,
+                overwrite_output=flac_overwrite_output,
+                delete_original=flac_delete_original,
+                num_threads=int(flac_threads))
             converter.read()
-            converter.convert_flacs_to_alac()
+            converter.write()
 
     except KeyboardInterrupt:
         if converter:
