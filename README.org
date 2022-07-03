@@ -173,3 +173,40 @@ This is for play count, rating, etc.
 Right click -> Convert -> FLAC to ALAC
 5. Import playlists with the m4a endings, delete original playlists.
 File -> Load Playlist -> Select all Playlists
+
+* Example Usage
+
+Create script like below:
+
+#+begin_src sh :tangle yes
+#!/usr/local/bin/bash
+
+PATH=/usr/local/bin
+
+if ! tmux has-session -t footunes 2>/dev/null; then
+    # https://stackoverflow.com/questions/25207909/tmux-open-terminal-failed-not-a-terminal
+    tmux new-session -d -s footunes python /bebe/script/foo_tunes/foo_tunes.py \
+         --jojo \
+         --watch_sleep_time=30 \
+         --watch_playlist_delay=30 \
+         --watch_convert_delay=300 # Five minutes.
+fi
+#+end_src
+
+In this example, this script is located at:
+
+#+begin_src text :tangle yes
+/bebe/script/foo_tunes/foo_tunes_tmux.sh
+#+end_src
+
+Set up crontab to automatically start up the script.
+
+#+begin_src sh :tangle yes
+$ sudo crontab -e
+#+end_src
+
+#+begin_src text :tangle yes
+@reboot su james -c /bebe/script/foo_tunes/foo_tunes_tmux.sh >/bebe/script/foo_tunes/startup.log 2>&1
+*/5 * * * * su james -c /bebe/script/foo_tunes/foo_tunes_tmux.sh >/bebe/script/foo_tunes/run.log 2>&1
+#+end_src
+

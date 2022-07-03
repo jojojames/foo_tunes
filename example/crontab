@@ -1,0 +1,2 @@
+@reboot su james -c /bebe/script/foo_tunes/foo_tunes_tmux.sh >/bebe/script/foo_tunes/startup.log 2>&1
+*/5 * * * * su james -c /bebe/script/foo_tunes/foo_tunes_tmux.sh >/bebe/script/foo_tunes/run.log 2>&1
