@@ -90,6 +90,10 @@ parser.add_argument('--jojo', default=False, action="store_true",
 parser.add_argument('-v', '--verbose', default=False, action="store_true",
                     help='Verbose logging.')
 
+def print_if(str: str):
+    """Print statement only if VERBOSE or DRY is set."""
+    if VERBOSE or DRY:
+        print(str)
 
 def true_path(path: str) -> str:
     # https://stackoverflow.com/questions/37863476/why-would-one-use-both-os-path-abspath-and-os-path-realpath
@@ -137,13 +141,13 @@ def delete_some_trash(directory: str):
     resilio_trash_pattern = re.compile(r'(\._|^\._)')
     for f in files:
         if re.search(resilio_trash_pattern, f):
-            if VERBOSE:
-                print(f'Deleting trash {f}...')
-
+            print_if(f'Deleting trash {f}...')
             os.remove(f)
 
 def print_separator():
-    print('---------------------------------------------------------------')
+    if VERBOSE:
+        print('---------------------------------------------------------------')
+
 
 class Playlist:
 
@@ -155,8 +159,7 @@ class Playlist:
         if self.songs:
             return
         self.songs = []
-        if VERBOSE:
-            print("Reading file:", self.file)
+        print_if(f'Reading file: {self.file}')
         with open(self.file, 'r') as f:
             for line in f.readlines():
                 if line.strip():
@@ -175,8 +178,7 @@ class Playlist:
                 for each in self.songs:
                     f.write(each + "\n")
 
-        if VERBOSE or DRY:
-            print('Wrote: ', playlist_path)
+        print_if(f'Wrote {playlist_path}')
 
 
 class PlaylistManager:
@@ -187,8 +189,7 @@ class PlaylistManager:
 
     def read(self):
         playlist_glob = os.path.join(self.input_dir, '*.m3u8')
-        if VERBOSE:
-            print("Globbing for: ", playlist_glob)
+        print_if(f'Globbing for: {playlist_glob}')
 
         playlist_files = glob.glob(playlist_glob)
         for playlist_file in playlist_files:
@@ -196,28 +197,24 @@ class PlaylistManager:
             playlist.read()
             self.playlists.append(playlist)
 
-        if VERBOSE:
-            print("Playlist Files: ", playlist_files)
+        print_if(f'Playlist Files: {playlist_files}')
 
     def write(self):
         for playlist in self.playlists:
             playlist.write(self.output_dir)
 
     def convert_flac_to_alac(self):
-        if VERBOSE:
-            print('Converting m3u playlist extensions from .flac to .alac.')
+        print_if('Converting m3u playlist extensions from .flac to .alac.')
         for playlist in self.playlists:
             playlist.songs = list(map(flac_extension_to_alac, playlist.songs))
 
     def convert_windows_to_posix(self):
-        if VERBOSE:
-            print('Converting m3u playlist from Windows to Posix.')
+        print_if('Converting m3u playlist from Windows to Posix.')
         for playlist in self.playlists:
             playlist.songs = list(map(windows_path_to_posix, playlist.songs))
 
     def convert_from_str_to_str(self, from_str: str, to_str: str):
-        if VERBOSE:
-            print(f'Converting m3u playlist from {from_str} to {to_str}.')
+        print_if(f'Converting m3u playlist from {from_str} to {to_str}.')
 
         # Create partial function with from_str and to_str already set.
         from_str_to_str_fn = partial(from_str_to_str,
@@ -240,11 +237,9 @@ class Resilio:
 
         sync_pattern = re.compile("\!\.sync$")
         for file in files:
-            if VERBOSE:
-                print(f'Looking for sync pattern in {file}...')
+            print_if(f'Looking for sync pattern in {file}...')
             if re.search(sync_pattern, file):
-                if VERBOSE:
-                    print(f'Found sync pattern {file}')
+                print_if(f'Found sync pattern {file}')
                 return True
 
         return False
@@ -313,23 +308,18 @@ class MusicManager:
         # Modify Foobar2000 m3u playlists with .flac entries to .alac.
         self.playlist_manager.read()
         self.playlist_manager.convert_flac_to_alac()
-        if VERBOSE:
-            print(f'flac->alac, elapsed: {time.process_time() - start}')
-
+        print_if(f'flac->alac, elapsed: {time.process_time() - start}')
         self.playlist_manager.write()
 
         # Write the OSX version deriving from the current list of playlists.
         self.playlist_manager.output_dir = self.get_osx_m3u_directory()
         self.playlist_manager.convert_windows_to_posix()
-        if VERBOSE:
-            print(f'windows->posix, elapsed: {time.process_time() - start}')
+        print_if(f'windows->posix, elapsed: {time.process_time() - start}')
 
         self.playlist_manager.convert_from_str_to_str(
             from_str=r'X:/music', to_str=r'/Users/james/Music')
-
-        if VERBOSE:
-            print(f'X:/music->/Users/james/Music, elapsed: '
-                  f'{time.process_time() - start}')
+        print_if(f'X:/music->/Users/james/Music, elapsed: '
+                 f'{time.process_time() - start}')
 
         self.playlist_manager.write()
 
@@ -337,9 +327,8 @@ class MusicManager:
         self.playlist_manager.output_dir = self.get_bsd_m3u_directory()
         self.playlist_manager.convert_from_str_to_str(
             from_str=r'/Users/james/Music', to_str=r'/bebe/music')
-        if VERBOSE:
-            print(f'/Users/james/Music->/bebe/music, elapsed: '
-                  f'{time.process_time() - start}')
+        print_if(f'/Users/james/Music->/bebe/music, elapsed: '
+                 f'{time.process_time() - start}')
 
         self.playlist_manager.write()
 
@@ -408,9 +397,8 @@ class MusicManager:
             while True:
                 now = datetime.now()
                 current_time = now.strftime("%H:%M:%S")
-                if VERBOSE:
-                    print(f'Time: {current_time}.. Observing changes...')
-                    time.sleep(self.sleep_time)
+                print_if(f'Time: {current_time}.. Observing changes...')
+                time.sleep(self.sleep_time)
         except KeyboardInterrupt:
             print('User triggered abort.')
         except:
@@ -438,27 +426,24 @@ class PlaylistWatchHandler(FileSystemEventHandler):
 
     @staticmethod
     def on_any_event(event):
-        if VERBOSE:
-            print(f'PlaylistWatchHandler: on_any_event: {event}!!')
+        print_if(f'PlaylistWatchHandler: on_any_event: {event}!!')
         if event.event_type == 'created':
-            if VERBOSE:
-                print('PlaylistWatchHandler: Scheduling timer to convert playlists...')
+            print_if('PlaylistWatchHandler: Scheduling timer to convert '
+                     'playlists...')
 
             delay = PlaylistWatchHandler.delay
             if PlaylistWatchHandler.timer:
-                if VERBOSE:
-                    print('Canceling current timer and creating a new one...')
-                    PlaylistWatchHandler.timer.cancel()
-                    PlaylistWatchHandler.timer = threading.Timer(
-                        delay, MusicManager.music_manager.convert_playlists)
+                print_if('Canceling current timer and creating a new one...')
+                PlaylistWatchHandler.timer.cancel()
+                PlaylistWatchHandler.timer = threading.Timer(
+                    delay, MusicManager.music_manager.convert_playlists)
             else:
-                if VERBOSE:
-                    print('Creating a new timer...')
-                    PlaylistWatchHandler.timer = threading.Timer(
-                        delay, MusicManager.music_manager.convert_playlists)
+                print_if('Creating a new timer...')
+                PlaylistWatchHandler.timer = threading.Timer(
+                    delay, MusicManager.music_manager.convert_playlists)
 
             # Schedule timer to start.
-            print(f'Timer scheduled to start in {delay} seconds...')
+            print_if(f'Timer scheduled to start in {delay} seconds...')
             PlaylistWatchHandler.timer.start()
 
 
@@ -473,27 +458,24 @@ class ConverterWatchHandler(FileSystemEventHandler):
 
     @staticmethod
     def on_any_event(event):
-        if VERBOSE:
-            print(f'ConverterWatchHandler: on_any_event: {event}!!')
+        print_if(f'ConverterWatchHandler: on_any_event: {event}!!')
         if event.event_type == 'created':
-            if VERBOSE:
-                print('ConverterWatchHandler: Scheduling timer to convert flacs...')
+            print_if('ConverterWatchHandler: Scheduling timer to convert '
+                     'flacs...')
 
             delay = ConverterWatchHandler.delay
             if ConverterWatchHandler.timer:
-                if VERBOSE:
-                    print('Canceling current timer and creating a new one...')
-                    ConverterWatchHandler.timer.cancel()
-                    ConverterWatchHandler.timer = threading.Timer(
-                        delay, MusicManager.music_manager.convert_and_move_flacs)
+                print_if('Canceling current timer and creating a new one...')
+                ConverterWatchHandler.timer.cancel()
+                ConverterWatchHandler.timer = threading.Timer(
+                    delay, MusicManager.music_manager.convert_and_move_flacs)
             else:
-                if VERBOSE:
-                    print('Creating a new timer...')
-                    ConverterWatchHandler.timer = threading.Timer(
-                        delay, MusicManager.music_manager.convert_and_move_flacs)
+                print_if('Creating a new timer...')
+                ConverterWatchHandler.timer = threading.Timer(
+                    delay, MusicManager.music_manager.convert_and_move_flacs)
 
             # Schedule timer to start.
-            print(f'Timer scheduled to start in {delay} seconds...')
+            print_if(f'Timer scheduled to start in {delay} seconds...')
             ConverterWatchHandler.timer.start()
 
 
@@ -513,8 +495,7 @@ class FlacToAlacConverter:
         self.num_threads = num_threads
 
     def read(self):
-        if VERBOSE:
-            print('Finding files recursive for: ', self.input_dir)
+        print_if('Finding files recursive for: ', self.input_dir)
 
         # Clean up trash first...
         delete_some_trash(self.input_dir)
@@ -528,11 +509,10 @@ class FlacToAlacConverter:
             if re.search(flac_pattern, f) or re.search(Flac_pattern, f):
                 flac_files.append(f)
 
-        if VERBOSE:
-            print_separator()
-            print(f'# of Flac files to convert: {len(flac_files)}')
-            print(f'Flac files to convert: {flac_files}')
-            print_separator()
+        print_separator()
+        print_if(f'# of Flac files to convert: {len(flac_files)}')
+        print_if(f'Flac files to convert: {flac_files}')
+        print_separator()
 
         self.flacs = flac_files
 
@@ -548,13 +528,10 @@ class FlacToAlacConverter:
             print_separator()
             if os.path.exists(alac_path):
                 if self.overwrite_output:
-                    if VERBOSE:
-                        print(f'{alac_path} exists... deleting first...')
-
+                    print_if(f'{alac_path} exists... deleting first...')
                     os.remove(alac_path)
                 else:
-                    if VERBOSE:
-                        print(f'{alac_path} already exists... skipping...')
+                    print_if(f'{alac_path} already exists... skipping...')
                     continue
 
             print("Converting file {} of {}".format(
@@ -587,26 +564,22 @@ class FlacToAlacConverter:
                     # https://stackoverflow.com/questions/41171791/how-to-suppress-or-capture-the-output-of-subprocess-run
                     capture_output=True, text=True)
 
-            if VERBOSE:
-                prefix = 'xld' if XLD_AVAILABLE else 'ffmpeg'
-                if process.stdout.strip():
-                    print(f'{prefix}: standard out: {process.stdout}')
-                if process.stderr.strip():
-                    print(f'{prefix}: {process.stderr}')
+            prefix = 'xld' if XLD_AVAILABLE else 'ffmpeg'
+            if process.stdout.strip():
+                print_if(f'{prefix}: standard out: {process.stdout}')
+            if process.stderr.strip():
+                print_if(f'{prefix}: {process.stderr}')
 
-                print_separator()
+            print_separator()
 
             # Should we try deleting even if we potentially skip converting?
             if self.delete_original:
-                if VERBOSE:
-                    print(f'Deleting {flac_path}...')
-
+                print_if(f'Deleting {flac_path}...')
                 os.remove(flac_path)
 
     def write(self):
         if len(self.flacs) == 0:
-            if VERBOSE:
-                print('No flacs to convert... skipping.')
+            print_if('No flacs to convert... skipping.')
             return
         for flac_path in self.flacs:
             alac_path = alac_path_from_flac_path(flac_path=flac_path)
@@ -656,24 +629,23 @@ def main():
         music_manager.run()
         return
 
-    if VERBOSE:
-        print_separator()
-        print('--m3u_input_dir:', m3u_input_dir)
-        print('--m3u_output_dir:', m3u_output_dir)
-        print('--m3u_flac_to_alac:', m3u_flac_to_alac)
-        print('--m3u_windows_to_posix:', m3u_windows_to_posix)
-        print('--m3u_from_str:', m3u_from_str)
-        print('--m3u_to_str:', m3u_to_str)
-        print('--flac_dir:', flac_dir)
-        print('--dry:', DRY)
-        print('--flac_overwrite_output', flac_overwrite_output)
-        print('--flac_delete_original', flac_delete_original)
-        print('--flac_threads', flac_threads)
-        print('--clean_up', clean_up)
-        print('--watch_playlist_delay', watch_playlist_delay)
-        print('--watch_convert_delay', watch_convert_delay)
-        print('--jojo', jojo)
-        print_separator()
+    print_separator()
+    print_if(f'--m3u_input_dir: {m3u_input_dir}')
+    print_if(f'--m3u_output_dir: {m3u_output_dir}')
+    print_if(f'--m3u_flac_to_alac: {m3u_flac_to_alac}')
+    print_if(f'--m3u_windows_to_posix: {m3u_windows_to_posix}')
+    print_if(f'--m3u_from_str: {m3u_from_str}')
+    print_if(f'--m3u_to_str: {m3u_to_str}')
+    print_if(f'--flac_dir: {flac_dir}')
+    print_if(f'--dry: {DRY}')
+    print_if(f'--flac_overwrite_output: {flac_overwrite_output}')
+    print_if(f'--flac_delete_original: {flac_delete_original}')
+    print_if(f'--flac_threads: {flac_threads}')
+    print_if(f'--clean_up: {clean_up}')
+    print_if(f'--watch_playlist_delay: {watch_playlist_delay}')
+    print_if(f'--watch_convert_delay: {watch_convert_delay}')
+    print_if(f'--jojo: {jojo}')
+    print_separator()
 
     if clean_up:
         print(f'Cleaning up {clean_up}')
@@ -695,24 +667,20 @@ def main():
             playlist_manager.read()
             if m3u_flac_to_alac:
                 playlist_manager.convert_flac_to_alac()
-                if VERBOSE:
-                    print(f'flac->alac, elapsed: {time.process_time() - start}')
+                print_if(f'flac->alac, elapsed: {time.process_time() - start}')
             if m3u_windows_to_posix:
                 playlist_manager.convert_windows_to_posix()
-                if VERBOSE:
-                    print('windows->posix, elapsed: '
-                          f'{time.process_time() - start}')
+                print_if('windows->posix, elapsed: '
+                         f'{time.process_time() - start}')
             if m3u_from_str and m3u_to_str:
                 playlist_manager.convert_from_str_to_str(from_str=m3u_from_str,
                                                          to_str=m3u_to_str)
-                if VERBOSE:
-                    print(f'{m3u_from_str}->{m3u_to_str}, elapsed: '
-                          f'{time.process_time() - start}')
+                print_if(f'{m3u_from_str}->{m3u_to_str}, elapsed: '
+                         f'{time.process_time() - start}')
 
             playlist_manager.write()
-            if VERBOSE:
-                print('Finished writing, elapsed: '
-                      f'{time.process_time() - start}')
+            print_if('Finished writing, elapsed: '
+                     f'{time.process_time() - start}')
 
         if flac_dir:
             if not FFMPEG_AVAILABLE and not XLD_AVAILABLE:
