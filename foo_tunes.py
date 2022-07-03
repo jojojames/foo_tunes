@@ -13,6 +13,8 @@ from watchdog.events import FileSystemEventHandler
 
 parser = argparse.ArgumentParser(description='Foobar2000 -> iTunes utilities')
 
+### Playlist / .m3u8 Management
+
 parser.add_argument('-i', '--input_dir')
 parser.add_argument('-o', '--output_dir', default=None)
 parser.add_argument('--flac_ext_to_alac', default=False, action="store_true",
@@ -24,6 +26,8 @@ parser.add_argument('--windows_to_posix', default=False, action="store_true",
 parser.add_argument('--from_str', help='String in playlist line to replace.')
 parser.add_argument('--to_str', help='String in playlist line to replace to.')
 
+### FLAC Conversion
+
 parser.add_argument('--flac_dir',
                     help='If set, convert .flac files in this directory to .m4a.')
 parser.add_argument('--flac_overwrite_output', default=False, action="store_true",
@@ -34,14 +38,18 @@ parser.add_argument('--flac_delete_original', default=False, action="store_true"
 parser.add_argument('--flac_convert_threads', default='4',
                     help='Number of threads to use when converting.')
 
+### Utility
+
 parser.add_argument('--clean_up',
-                    help='If set, clean up this directory of extraneous files.')
+                    help='If set, clean up this directory of extraneous files.'
+                    'This is of the form --clean_up=/some/directory')
+
+parser.add_argument('--dry', default=False, action="store_true",
+                    help="If set, don't write any new changes.")
 
 parser.add_argument('--jojo', default=False, action="store_true",
                     help='If set, manage music.')
 
-parser.add_argument('--dry', default=False, action="store_true",
-                    help="If set, don't write any new changes.")
 parser.add_argument('-v', '--verbose', default=False, action="store_true",
                     help='Verbose logging.')
 
