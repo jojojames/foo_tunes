@@ -1,6 +1,6 @@
 #!/usr/bin/python3
 
-import argparse, glob, logging, os, platform, queue, re, subprocess, threading, time
+import argparse, glob, logging, os, platform, queue, re, subprocess, threading, time, traceback
 
 from datetime import datetime
 from functools import partial
@@ -401,8 +401,9 @@ class MusicManager:
                 time.sleep(self.sleep_time)
         except KeyboardInterrupt:
             print('User triggered abort.')
-        except:
+        except Exception:
             print('Exception while looping...')
+            traceback.print_exc()
         finally:
             self.playlist_observer.stop()
             self.playlist_observer.join()
@@ -625,7 +626,7 @@ def main():
         ConverterWatchHandler.delay = int(watch_convert_delay)
 
     if jojo:
-        music_manager = MusicManager(sleep_time=watch_sleep_time)
+        music_manager = MusicManager(sleep_time=int(watch_sleep_time))
         music_manager.run()
         return
 
