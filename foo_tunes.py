@@ -291,22 +291,33 @@ class MusicManager:
             return r'/bebe/music'
 
     def convert_playlists(self):
+        start = time.process_time()
         # Modify Foobar2000 m3u playlists with .flac entries to .alac.
         self.playlist_manager.read()
         self.playlist_manager.convert_flac_to_alac()
+        if VERBOSE:
+            print(f'flac->alac, elapsed: {time.process_time() - start}')
         self.playlist_manager.write()
 
         # Write the OSX version deriving from the current list of playlists.
         self.playlist_manager.output_dir = self.get_osx_m3u_directory()
         self.playlist_manager.convert_windows_to_posix()
+        if VERBOSE:
+            print(f'windows->posix, elapsed: {time.process_time() - start}')
         self.playlist_manager.convert_from_str_to_str(
             from_str=r'X:/music', to_str=r'/Users/james/Music')
+        if VERBOSE:
+            print(f'X:/music->/Users/james/Music, elapsed: '
+                  f'{time.process_time() - start}')
         self.playlist_manager.write()
 
         # Write the FreeBSD version deriving from the current list of playlists.
         self.playlist_manager.output_dir = self.get_bsd_m3u_directory()
         self.playlist_manager.convert_from_str_to_str(
             from_str=r'/Users/james/Music', to_str=r'/bebe/music')
+        if VERBOSE:
+            print(f'/Users/james/Music->/bebe/music, elapsed: '
+                  f'{time.process_time() - start}')
         self.playlist_manager.write()
 
     def convert_and_move_flacs(self):
@@ -638,17 +649,24 @@ def main():
             playlist_manager.read()
             if m3u_flac_to_alac:
                 playlist_manager.convert_flac_to_alac()
-                print(f'flac->alac, elapsed: {time.process_time() - start}')
+                if VERBOSE:
+                    print(f'flac->alac, elapsed: {time.process_time() - start}')
             if m3u_windows_to_posix:
                 playlist_manager.convert_windows_to_posix()
-                print(f'windows->posix, elapsed: {time.process_time() - start}')
+                if VERBOSE:
+                    print('windows->posix, elapsed: '
+                          f'{time.process_time() - start}')
             if m3u_from_str and m3u_to_str:
                 playlist_manager.convert_from_str_to_str(from_str=m3u_from_str,
                                                          to_str=m3u_to_str)
-                print(f'str->str, elapsed: {time.process_time() - start}')
+                if VERBOSE:
+                    print(f'{m3u_from_str}->{m3u_to_str}, elapsed: '
+                          f'{time.process_time() - start}')
 
             playlist_manager.write()
-            print(f'Finished writing, elapsed: {time.process_time() - start}')
+            if VERBOSE:
+                print('Finished writing, elapsed: '
+                      f'{time.process_time() - start}')
 
         if flac_dir:
             if not FFMPEG_AVAILABLE and not XLD_AVAILABLE:
