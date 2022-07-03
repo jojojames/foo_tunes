@@ -2,6 +2,7 @@
 
 import argparse, glob, logging, os, platform, queue, re, subprocess, threading, time
 
+from datetime import datetime
 from functools import partial
 from pathlib import Path, PurePosixPath, PureWindowsPath
 from shutil import which, move
@@ -332,9 +333,11 @@ class MusicManager:
 
         try:
             while True:
+                now = datetime.now()
+                current_time = now.strftime("%H:%M:%S")
                 if VERBOSE:
-                    print('Observing changes...')
-                time.sleep(5)
+                    print(f'Time: {current_time}.. Observing changes...')
+                    time.sleep(60)
         except KeyboardInterrupt:
             print('User triggered abort.')
         except:
@@ -348,12 +351,13 @@ class MusicManager:
     def run(self):
         self.convert_playlists()
         self.convert_and_move_flacs()
-        # self.setup_file_watchers()
+        self.setup_file_watchers()
+
 
 class PlaylistWatchHandler(FileSystemEventHandler):
     """File System Watch Handler for playlist changes."""
 
-    working = False
+    timer: threading.Timer = None
 
     @staticmethod
     def on_any_event(event):
@@ -361,21 +365,28 @@ class PlaylistWatchHandler(FileSystemEventHandler):
             print(f'PlaylistWatchHandler: on_any_event: {event}!!')
         if event.event_type == 'created':
             if VERBOSE:
-                print('PlaylistWatchHandler: Attempting to convert playlists...')
+                print('PlaylistWatchHandler: Scheduling timer to convert playlists...')
 
-            if PlaylistWatchHandler.working:
-                print('PlaylistWatchHandler still working...')
-            else:
-                PlaylistWatchHandler.working = True
-                MusicManager.music_manager.convert_playlists()
+            delay = 120 # Two minutes
+            if PlaylistWatchHandler.timer:
                 if VERBOSE:
-                    print('PlaylistWatchHandler: finished converting...')
-                PlaylistWatchHandler.working = False
+                    print('Canceling current timer and creating a new one...')
+                    PlaylistWatchHandler.timer.cancel()
+                    PlaylistWatchHandler.timer = threading.Timer(
+                        delay, MusicManager.music_manager.convert_playlists)
+            else:
+                if VERBOSE:
+                    print('Creating a new timer...')
+                    PlaylistWatchHandler.timer = threading.Timer(
+                        delay, MusicManager.music_manager.convert_playlists)
+                    print(f'Timer scheduled to start in {delay} seconds...')
+                    PlaylistWatchHandler.timer.start()
+
 
 class ConverterWatchHandler(FileSystemEventHandler):
     """File System Watch Handler for flac->alac changes."""
 
-    working = False
+    timer: threading.Timer = None
 
     @staticmethod
     def on_any_event(event):
@@ -383,16 +394,22 @@ class ConverterWatchHandler(FileSystemEventHandler):
             print(f'ConverterWatchHandler: on_any_event: {event}!!')
         if event.event_type == 'created':
             if VERBOSE:
-                print('ConverterWatchHandler: Attempting to convert flacs...')
+                print('ConverterWatchHandler: Scheduling timer to convert flacs...')
 
-            if ConverterWatchHandler.working:
-                print('ConvertWatchHandler still working...')
-            else:
-                ConverterWatchHandler.working = True
-                MusicManager.music_manager.convert_and_move_flacs()
+            delay = 120 # Two minutes
+            if ConverterWatchHandler.timer:
                 if VERBOSE:
-                    print('ConverterWatchHandler: finished converting...')
-                ConverterWatchHandler.working = False
+                    print('Canceling current timer and creating a new one...')
+                    ConverterWatchHandler.timer.cancel()
+                    ConverterWatchHandler.timer = threading.Timer(
+                        delay, MusicManager.music_manager.convert_and_move_flacs)
+            else:
+                if VERBOSE:
+                    print('Creating a new timer...')
+                    ConverterWatchHandler.timer = threading.Timer(
+                        delay, MusicManager.music_manager.convert_and_move_flacs)
+                    print(f'Timer scheduled to start in {delay} seconds...')
+                    ConverterWatchHandler.timer.start()
 
 
 class Converter:
@@ -510,8 +527,6 @@ class Converter:
             thread = threading.Thread(target=self.convert_worker)
             thread.start()
             self.threads.append(thread)
-        while threading.active_count() > 1:
-            time.sleep(1)
         for thread in self.threads:
             thread.join()
 
