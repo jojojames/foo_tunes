@@ -359,24 +359,33 @@ class MusicManager:
                 self.converter.thread_kill_event.set()
 
             print("Done...")
+        except Exception:
+            print('Exception while converting music...')
+            traceback.print_exc()
 
         if self.resilio.syncing():
             print('Resilio syncing... Skipping music move...')
             return
 
-        # Move music to Music directory.
-        move_to = os.path.join(self.get_music_directory(), '_TO_PROCESS')
-        if not os.path.exists(move_to):
-            os.makedirs(move_to)
+        try:
+            # Move music to Music directory.
+            move_to = os.path.join(self.get_music_directory(), '_TO_PROCESS')
+            if not os.path.exists(move_to):
+                os.makedirs(move_to)
 
-        ds_store_pattern = re.compile('\.DS_Store')
-        for music_dir in music_dirs:
-            if re.search(ds_store_pattern, music_dir):
-                continue
-            from_dir = os.path.join(flac_dir, music_dir)
-            to_dir = os.path.join(move_to, music_dir)
-            move(from_dir, to_dir)
-            print(f'Moved {from_dir} to {to_dir}...')
+                ds_store_pattern = re.compile('\.DS_Store')
+                for music_dir in music_dirs:
+                    if re.search(ds_store_pattern, music_dir):
+                        continue
+                    from_dir = os.path.join(flac_dir, music_dir)
+                    to_dir = os.path.join(move_to, music_dir)
+                    move(from_dir, to_dir)
+                    print(f'Moved {from_dir} to {to_dir}...')
+        except KeyboardInterrupt:
+            print("Done...")
+        except Exception:
+            print('Exception while moving music...')
+            traceback.print_exc()
 
     def setup_file_watchers(self):
         MusicManager.music_manager = self
