@@ -376,25 +376,35 @@ class FFMpeg:
             print('To:', alac_path)
             print_separator()
 
-            # Some metadata is lost doing this but using -movflags seems to
-            # make the metadata unrecognizable by foobar2000, iTunes, etc.
-            process = subprocess.run(
-                # https://unix.stackexchange.com/questions/415477/lossless-audio-conversion-from-flac-to-alac-using-ffmpeg
-                ['ffmpeg',
-                 # https://superuser.com/questions/326629/how-can-i-make-ffmpeg-be-quieter-less-verbose
-                 '-v', 'verbose' if VERBOSE else 'warning',
-                 '-i', flac_path, # input file
-                 '-acodec', 'alac', # 'force audio codec' to alac
-                 '-vcodec', 'copy', # 'force video codec' to copy stream
-                 alac_path], # 'output file'
-                # https://stackoverflow.com/questions/41171791/how-to-suppress-or-capture-the-output-of-subprocess-run
-                capture_output=True, text=True)
+            if XLD_AVAILABLE:
+                # https://tmkk.undo.jp/xld/index_e.html
+                # This seems to get all the metadata and the coverart but it's
+                # OSX only...
+                # brew install xld
+                process = subprocess.run(
+                    ['xld', flac_path, '-f', 'alac', '-o', alac_path],
+                    capture_output=True, text=True)
+            else:
+                # Some metadata is lost doing this but using -movflags seems to
+                # make the metadata unrecognizable by foobar2000, iTunes, etc.
+                process = subprocess.run(
+                    # https://unix.stackexchange.com/questions/415477/lossless-audio-conversion-from-flac-to-alac-using-ffmpeg
+                    ['ffmpeg',
+                     # https://superuser.com/questions/326629/how-can-i-make-ffmpeg-be-quieter-less-verbose
+                     '-v', 'info' if VERBOSE else 'warning',
+                     '-i', flac_path, # input file
+                     '-acodec', 'alac', # 'force audio codec' to alac
+                     '-vcodec', 'copy', # 'force video codec' to copy stream
+                     alac_path], # 'output file'
+                    # https://stackoverflow.com/questions/41171791/how-to-suppress-or-capture-the-output-of-subprocess-run
+                    capture_output=True, text=True)
 
             if VERBOSE:
+                prefix = 'xld' if XLD_AVAILABLE else 'ffmpeg'
                 if process.stdout.strip():
-                    print(f"FFMPEG: standard out: {process.stdout}")
+                    print(f'{prefix}: standard out: {process.stdout}')
                 if process.stderr.strip():
-                    print(f'FFMPEG: {process.stderr}')
+                    print(f'{prefix}: {process.stderr}')
 
                 print_separator()
 
@@ -422,7 +432,7 @@ class FFMpeg:
 
 def main():
 
-    global DRY, VERBOSE
+    global DRY, FFMPEG_AVAILABLE, VERBOSE, XLD_AVAILABLE
     args = parser.parse_args()
     input_dir = args.input_dir
     output_dir = args.output_dir
@@ -439,6 +449,7 @@ def main():
     VERBOSE = args.verbose or jojo
     DRY = args.dry
 
+    XLD_AVAILABLE = which('xld') # OSX Only
     FFMPEG_AVAILABLE = which('ffmpeg')
 
     if jojo:
@@ -489,8 +500,8 @@ def main():
                 playlist_manager.write()
 
         if flac_dir:
-            if not FFMPEG_AVAILABLE:
-                print('Install ffmpeg to use --flac_dir.')
+            if not FFMPEG_AVAILABLE and not XLD_AVAILABLE:
+                print('Install ffmpeg or xld to use --flac_dir.')
                 return
 
             ffmpeg_wrapper = FFMpeg(input_dir=flac_dir,
