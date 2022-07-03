@@ -59,6 +59,22 @@ parser.add_argument('--flac_delete_original', default=False, action="store_true"
 parser.add_argument('--flac_threads', default='4',
                     help='Number of threads to use when converting.')
 
+### Watching for Changes
+
+parser.add_argument(
+    '--watch_sleep_time', default='30',
+    help='Number of seconds to sleep for when watching directory changes.')
+
+parser.add_argument(
+    '--watch_playlist_delay',
+    help='Number of seconds to wait before managing playlists upon directory'
+    ' changes.')
+
+parser.add_argument(
+    '--watch_convert_delay',
+    help='Number of seconds to wait before converting flacs upon directory'
+    ' changes.')
+
 ### Utility
 
 parser.add_argument('--clean_up',
@@ -234,7 +250,7 @@ class Resilio:
         return False
 
 class MusicManager:
-    def __init__(self):
+    def __init__(self, sleep_time: int = 30):
         self.resilio = Resilio(sync_dir=self.get_sync_directory())
 
         self.playlist_manager = PlaylistManager(
@@ -245,6 +261,8 @@ class MusicManager:
             input_dir=self.get_flac_directory(),
             overwrite_output=True,
             delete_original=True)
+
+        self.sleep_time = sleep_time
 
     def get_playlist_directory(self):
         if platform.system() == 'Windows':
@@ -297,6 +315,7 @@ class MusicManager:
         self.playlist_manager.convert_flac_to_alac()
         if VERBOSE:
             print(f'flac->alac, elapsed: {time.process_time() - start}')
+
         self.playlist_manager.write()
 
         # Write the OSX version deriving from the current list of playlists.
@@ -304,11 +323,14 @@ class MusicManager:
         self.playlist_manager.convert_windows_to_posix()
         if VERBOSE:
             print(f'windows->posix, elapsed: {time.process_time() - start}')
+
         self.playlist_manager.convert_from_str_to_str(
             from_str=r'X:/music', to_str=r'/Users/james/Music')
+
         if VERBOSE:
             print(f'X:/music->/Users/james/Music, elapsed: '
                   f'{time.process_time() - start}')
+
         self.playlist_manager.write()
 
         # Write the FreeBSD version deriving from the current list of playlists.
@@ -318,6 +340,7 @@ class MusicManager:
         if VERBOSE:
             print(f'/Users/james/Music->/bebe/music, elapsed: '
                   f'{time.process_time() - start}')
+
         self.playlist_manager.write()
 
     def convert_and_move_flacs(self):
@@ -387,7 +410,7 @@ class MusicManager:
                 current_time = now.strftime("%H:%M:%S")
                 if VERBOSE:
                     print(f'Time: {current_time}.. Observing changes...')
-                    time.sleep(60)
+                    time.sleep(self.sleep_time)
         except KeyboardInterrupt:
             print('User triggered abort.')
         except:
@@ -408,6 +431,10 @@ class PlaylistWatchHandler(FileSystemEventHandler):
     """File System Watch Handler for playlist changes."""
 
     timer: threading.Timer = None
+    # Thirty seconds by default.
+    # Recommend to use a higher delay for more stability and a lower delay for
+    # more responsiveness.
+    delay = 30
 
     @staticmethod
     def on_any_event(event):
@@ -417,7 +444,7 @@ class PlaylistWatchHandler(FileSystemEventHandler):
             if VERBOSE:
                 print('PlaylistWatchHandler: Scheduling timer to convert playlists...')
 
-            delay = 120 # Two minutes
+            delay = PlaylistWatchHandler.delay
             if PlaylistWatchHandler.timer:
                 if VERBOSE:
                     print('Canceling current timer and creating a new one...')
@@ -429,14 +456,20 @@ class PlaylistWatchHandler(FileSystemEventHandler):
                     print('Creating a new timer...')
                     PlaylistWatchHandler.timer = threading.Timer(
                         delay, MusicManager.music_manager.convert_playlists)
-                    print(f'Timer scheduled to start in {delay} seconds...')
-                    PlaylistWatchHandler.timer.start()
+
+            # Schedule timer to start.
+            print(f'Timer scheduled to start in {delay} seconds...')
+            PlaylistWatchHandler.timer.start()
 
 
 class ConverterWatchHandler(FileSystemEventHandler):
     """File System Watch Handler for flac->alac changes."""
 
     timer: threading.Timer = None
+    # Two minutes by default.
+    # Recommend to use a higher delay for more stability and a lower delay for
+    # more responsiveness.
+    delay = 120
 
     @staticmethod
     def on_any_event(event):
@@ -446,7 +479,7 @@ class ConverterWatchHandler(FileSystemEventHandler):
             if VERBOSE:
                 print('ConverterWatchHandler: Scheduling timer to convert flacs...')
 
-            delay = 120 # Two minutes
+            delay = ConverterWatchHandler.delay
             if ConverterWatchHandler.timer:
                 if VERBOSE:
                     print('Canceling current timer and creating a new one...')
@@ -458,8 +491,10 @@ class ConverterWatchHandler(FileSystemEventHandler):
                     print('Creating a new timer...')
                     ConverterWatchHandler.timer = threading.Timer(
                         delay, MusicManager.music_manager.convert_and_move_flacs)
-                    print(f'Timer scheduled to start in {delay} seconds...')
-                    ConverterWatchHandler.timer.start()
+
+            # Schedule timer to start.
+            print(f'Timer scheduled to start in {delay} seconds...')
+            ConverterWatchHandler.timer.start()
 
 
 class FlacToAlacConverter:
@@ -601,14 +636,23 @@ def main():
     flac_threads = args.flac_threads
     jojo = args.jojo
     clean_up = args.clean_up
+    watch_sleep_time = args.watch_sleep_time
+    watch_playlist_delay = args.watch_playlist_delay
+    watch_convert_delay = args.watch_convert_delay
     VERBOSE = args.verbose or jojo
     DRY = args.dry
 
     XLD_AVAILABLE = which('xld') # OSX Only
     FFMPEG_AVAILABLE = which('ffmpeg')
 
+    if watch_playlist_delay:
+        PlaylistWatchHandler.delay = int(watch_playlist_delay)
+
+    if watch_convert_delay:
+        ConverterWatchHandler.delay = int(watch_convert_delay)
+
     if jojo:
-        music_manager = MusicManager()
+        music_manager = MusicManager(sleep_time=watch_sleep_time)
         music_manager.run()
         return
 
@@ -626,6 +670,8 @@ def main():
         print('--flac_delete_original', flac_delete_original)
         print('--flac_threads', flac_threads)
         print('--clean_up', clean_up)
+        print('--watch_playlist_delay', watch_playlist_delay)
+        print('--watch_convert_delay', watch_convert_delay)
         print('--jojo', jojo)
         print_separator()
 
