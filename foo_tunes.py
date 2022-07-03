@@ -1,11 +1,13 @@
 #!/usr/bin/python3
 
-import glob, os, logging, argparse, re, queue, threading, subprocess, time, platform
+import argparse, glob, logging, os, platform, queue, re, subprocess, threading, time
 
 from functools import partial
 from pathlib import Path, PurePosixPath, PureWindowsPath
 from shutil import which, move
 from typing import List, Optional, Text
+from watchdog.observers import Observer
+from watchdog.events import FileSystemEventHandler
 
 
 parser = argparse.ArgumentParser(description='Foobar2000 -> iTunes utilities')
@@ -192,6 +194,32 @@ class Resilio:
 
         return False
 
+class PlaylistWatchHandler(FileSystemEventHandler):
+    """File System Watch Handler for playlist changes."""
+
+    def __init__(self, music_manager: MusicManager):
+        self.music_manager: MusicManager = music_manager
+
+    @staticmethod
+    def on_any_event(event):
+        if event.event_type == 'created':
+            if VERBOSE:
+                print(f'{event}!')
+            self.music_manager.convert_playlists()
+
+class ConverterWatchHandler(FileSystemEventHandler):
+    """File System Watch Handler for flac->alac changes."""
+
+    def __init__(self, music_manager: MusicManager):
+        self.music_manager: MusicManager = music_manager
+
+    @staticmethod
+    def on_any_event(event):
+        if event.event_type == 'created':
+            if VERBOSE:
+                print(f'{event}!')
+            self.music_manager.convert_and_move_flacs()
+
 class MusicManager:
     def __init__(self):
         self.resilio = Resilio(sync_dir=self.get_sync_directory())
@@ -203,6 +231,7 @@ class MusicManager:
         self.converter = Converter(input_dir=self.get_flac_directory(),
                                    overwrite_output=True,
                                    delete_original=True)
+        self.working = False
 
     def get_playlist_directory(self):
         if platform.system() == 'Windows':
@@ -248,7 +277,10 @@ class MusicManager:
         if platform.system() == 'FreeBSD':
             return r'/bebe/music'
 
-    def run(self):
+    def convert_playlists(self):
+        if self.working:
+            return
+        self.working = True
         # Modify Foobar2000 m3u playlists with .flac entries to .alac.
         self.playlist_manager.read()
         self.playlist_manager.convert_extension_flac_to_alac()
@@ -266,7 +298,12 @@ class MusicManager:
         self.playlist_manager.convert_from_str_to_str(
             from_str=r'/Users/james/Music', to_str=r'/bebe/music')
         self.playlist_manager.write()
+        self.working = False
 
+    def convert_and_move_flacs(self):
+        if self.working:
+            return
+        self.working = True
         flac_dir = self.get_flac_directory()
         if not os.path.exists(flac_dir):
             print(f'{flac_dir} does not exist. Skipping convert and move...')
@@ -311,6 +348,36 @@ class MusicManager:
             to_dir = os.path.join(move_to, music_dir)
             move(from_dir, to_dir)
             print(f'Moved {from_dir} to {to_dir}...')
+        self.working = False
+
+    def setup_file_watchers(self):
+        self.playlist_observer = Observer()
+        self.playlist_observer.schedule(PlaylistWatchHandler(self),
+                                        self.get_windows_m3u_directory(),
+                                        recursive=False)
+
+        self.converter_observer = Observer()
+        self.converter_observer.schedule(ConverterWatchHandler(self),
+                                         self.get_flac_directory(),
+                                         recursive=False)
+
+        try:
+            while True:
+                if VERBOSE:
+                    print('Observing changes...')
+                time.sleep(5)
+        except:
+            self.playlist_observer.stop()
+            self.converter_observer.stop()
+            print('Exception while looping...')
+
+        self.playlist_observer.join()
+        self.converter_observer.join()
+
+    def run(self):
+        self.convert_playlists()
+        self.convert_and_move_flacs()
+        self.setup_file_watchers()
 
 
 class Converter:

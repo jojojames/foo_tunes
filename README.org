@@ -1,6 +1,8 @@
-
+* Dependencies
+#+begin_src sh :tangle yes
+pip install watchdog
+#+end_src
 * Playlist Modifications
-
 ** Convert .flac extensions to m4a
 #+begin_src sh :tangle yes
   --flac_ext_to_alac # Default = False
