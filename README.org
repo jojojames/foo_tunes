@@ -184,10 +184,62 @@ Right click -> Convert -> FLAC to ALAC
 5. Import playlists with the m4a endings, delete original playlists.
 File -> Load Playlist -> Select all Playlists
 
-* Example Usage
+
+* Usage Example
+
+To automate this and let it run in the background:
 
 Create script like below:
 
+#+begin_src sh :tangle yes
+#!/usr/local/bin/bash
+
+PATH=/usr/local/bin
+
+if ! tmux has-session -t footunes 2>/dev/null; then
+    # https://stackoverflow.com/questions/25207909/tmux-open-terminal-failed-not-a-terminal
+    tmux new-session -d -s footunes python /bebe/script/foo_tunes/foo_tunes.py \
+         --flac_dir=/Volumes/bebe/sync/flacdir \
+         --flac_watch \
+         --flac_overwrite_output \
+         --flac_delete_original=False \
+         -m3u_i=/Volumes/bebe/playlists/windows \
+         -m3u_o=/Volumes/bebe/playlists/osx \
+         --m3u_flac_to_alac \
+         --m3u_windows_to_posix \
+         --m3u_from_str='X:/music' \
+         --m3u_to_str='/Users/james/Music' \
+         --m3u_watch \
+         --watch_sleep_time=30 \
+         --watch_playlist_delay=30 \
+         --watch_convert_delay=300 \
+         --verbose
+
+fi
+#+end_src
+
+In this example, this script is located at:
+
+#+begin_src text :tangle yes
+/root/dir/sample_tmux.sh
+#+end_src
+
+Set up crontab to automatically start up the script.
+
+#+begin_src sh :tangle yes
+$ sudo crontab -e
+#+end_src
+
+#+begin_src text :tangle yes
+@reboot su james -c /root/dir/sample_tmux.s >/tmp/footunes.log 2>&1
+*/5 * * * * su james -c /root/dir/sample_tmux.s >/tmp/footunes.log 2>&1
+#+end_src
+
+#+begin_src sh :tangle yes
+$ tmux attach # To attach and view script output.
+#+end_src
+
+* What I Do Usage Example
 #+begin_src sh :tangle yes
 #!/usr/local/bin/bash
 
@@ -203,7 +255,7 @@ if ! tmux has-session -t footunes 2>/dev/null; then
 fi
 #+end_src
 
-In this example, this script is located at:
+Script is located at:
 
 #+begin_src text :tangle yes
 /bebe/script/foo_tunes/foo_tunes_tmux.sh
@@ -212,14 +264,7 @@ In this example, this script is located at:
 Set up crontab to automatically start up the script.
 
 #+begin_src sh :tangle yes
-$ sudo crontab -e
-#+end_src
-
-#+begin_src text :tangle yes
+# Crontab:
 @reboot su james -c /bebe/script/foo_tunes/foo_tunes_tmux.sh >/bebe/script/foo_tunes/startup.log 2>&1
 */5 * * * * su james -c /bebe/script/foo_tunes/foo_tunes_tmux.sh >/bebe/script/foo_tunes/run.log 2>&1
-#+end_src
-
-#+begin_src sh :tangle yes
-$ tmux attach # To attach and view script output.
 #+end_src
