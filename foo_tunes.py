@@ -638,7 +638,6 @@ class GenreChanger():
 
             print_separator()
 
-
     def write(self):
         if len(self.files) == 0:
             print_if('No music files to tag... skipping.')
