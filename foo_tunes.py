@@ -158,8 +158,10 @@ def delete_some_trash(directory: str) -> None:
     # E.g.
     # ._file.flac
     # /bebe/sync/music/._file.flac
-    resilio_trash_pattern = re.compile(r'(\._|^\._)')
+    # .DS_Store
+    resilio_trash_pattern = re.compile(r'(\._|^\._|\.DS_Store)')
     for f in files:
+        print(f)
         if re.search(resilio_trash_pattern, f):
             print_if(f'Deleting trash {f}...')
             os.remove(f)
@@ -751,8 +753,8 @@ def main():
     print_separator()
 
     if args.clean_up:
-        print(f'Cleaning up {clean_up}')
-        delete_some_trash(clean_up)
+        print(f'Cleaning up {args.clean_up}')
+        delete_some_trash(args.clean_up)
 
     if args.jojo:
         music_manager = JojoMusicManager(args)

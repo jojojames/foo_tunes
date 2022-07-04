@@ -87,6 +87,16 @@ class FooTunesTest(unittest.TestCase):
         # Assert trash has been deleted.
         self.assertEqual(len(os.listdir(flac_dir)), 1)
 
+        ds_store_file = os.path.join(flac_dir, r'.DS_Store')
+        with open(trash_file, 'w') as f:
+            f.write('Create a new text file!')
+        self.assertEqual(len(os.listdir(flac_dir)), 2)
+
+        foo_tunes.delete_some_trash(flac_dir)
+
+        # Assert trash has been deleted.
+        self.assertEqual(len(os.listdir(flac_dir)), 1)
+
 
 class ResilioTest(unittest.TestCase):
     def test_get_temp_directory(self):
