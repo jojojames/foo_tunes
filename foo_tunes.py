@@ -499,6 +499,7 @@ class GenreChanger():
         HIPHOP = "Hip-Hop"
         JPOP = "J-Pop"
         KPOP = "K-Pop"
+        OST = "OST"
         ROCK = "Rock"
         VPOP = "V-Pop"
         dictionary: Dict = {
@@ -522,6 +523,7 @@ class GenreChanger():
             "korean": KPOP,
             "rap": HIPHOP,
             "rock": ROCK,
+            "soundtrack": OST,
             "v-pop": VPOP,
             "vpop": VPOP,
             "vietnamese-pop": VPOP,
