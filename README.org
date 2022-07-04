@@ -56,8 +56,43 @@ Windows to OSX, etc.
 #+begin_src sh :tangle yes
 --m3u_watch
 #+end_src
-** Using every flag
+* Convert Flac to Alac
+#+begin_src sh :tangle yes
+./foo_tunes.py --flac_dir=~/some-dir-with-flac-files --verbose
+#+end_src
+** Options:
+#+begin_src sh :tangle yes
+--flac_dir # Default = None
+--flac_overwrite_output # Default = False
+--flac_delete_original # Default = False
+--flac_convert_threads # Default = 4
+--flac_watch
+#+end_src
 
+** Watching directory for changes
+#+begin_src sh :tangle yes
+--flac_watch
+#+end_src
+* Recipes
+** Write to output dir
+#+begin_src sh :tangle yes
+  python foo_tunes.py -i=/Volumes/drive/playlists/windows --verbose -o=temp  --flac_ext_to_alac
+#+end_src
+
+#+begin_src sh :tangle yes
+  ./foo_tunes.py -i=/Volumes/bebe/playlists/windows --verbose -o=temp2  --flac_ext_to_alac
+#+end_src
+
+** To overwrite files
+#+begin_src sh :tangle yes
+  ./foo_tunes.py -i=/Volumes/bebe/playlists/windows --verbose  --flac_ext_to_alac
+#+end_src
+
+** Change some text in every line
+#+begin_src sh :tangle yes
+  ./foo_tunes.py -i=/Volumes/bebe/playlists/windows/ --from_str='X:\music' --to_str='Y:\music'
+#+end_src
+** Using most flags
 #+begin_src sh :tangle yes
 python foo_tunes.py \
 -m3u_i=/Volumes/bebe/playlists/windows \
@@ -78,113 +113,10 @@ python foo_tunes.py \
  /Users/james/Music/J-Pop/Utada Hikaru/Distance/01 Wait & See.mp3
 #+end_src
 
-* Convert Flac to Alac
-#+begin_src sh :tangle yes
-./foo_tunes.py --flac_dir=~/some-dir-with-flac-files --verbose
-#+end_src
-** Options:
-#+begin_src sh :tangle yes
---flac_dir # Default = None
---flac_overwrite_output # Default = False
---flac_delete_original # Default = False
---flac_convert_threads # Default = 4
---flac_watch
-#+end_src
-
-** Watching directory for changes
-#+begin_src sh :tangle yes
---flac_watch
-#+end_src
-* Run
-** Write to output dir
-#+begin_src sh :tangle yes
-  python foo_tunes.py -i=/Volumes/drive/playlists/windows --verbose -o=temp  --flac_ext_to_alac
-#+end_src
-
-#+begin_src sh :tangle yes
-  ./foo_tunes.py -i=/Volumes/bebe/playlists/windows --verbose -o=temp2  --flac_ext_to_alac
-#+end_src
-
-** To overwrite files
-#+begin_src sh :tangle yes
-  ./foo_tunes.py -i=/Volumes/bebe/playlists/windows --verbose  --flac_ext_to_alac
-#+end_src
-
-** Change some text in every line
-#+begin_src sh :tangle yes
-  ./foo_tunes.py -i=/Volumes/bebe/playlists/windows/ --from_str='X:\music' --to_str='Y:\music'
-#+end_src
-
-** Random commands
-#+begin_src sh :tangle yes
-  ./foo_tunes.py -i=/Volumes/bebe/playlists/windows/ --verbose -o=temp8 --from_str='X:/music' --to_str='/Users/james/Music' --windows_to_posix --flac_ext_to_alac
-#+end_src
 * Test
 #+begin_src sh :tangle yes
   python -m foo_tunes_test
 #+end_src
-
-* Random Foobar Notes
-** Query Syntax
-https://wiki.hydrogenaud.io/index.php?title=Foobar2000:Query_syntax
-** How to create Autoplaylist?
-https://hydrogenaud.io/index.php?topic=92694.0
-
-#+begin_src text :tangle yes
-  Library -> Album List -> (right click an album) -> Create Autoplaylist
-#+end_src
-** Changing Music Directory Path
-For example, say the original media library was on J:/ and the new media library
-is on X:/
-
-#+begin_src text :tangle yes
-Go to File -> Preferences -> Music Library -> Music Folders -> Add -> Add new Path.
-#+end_src
-
-Let Foobar2000 populate all the music files from the new path. There will be
-duplicates until this whole process is finished. Once Foobar's music folder
-status is 'Monitoring', Use Playlist Revive.
-
-#+begin_src text :tangle yes
-Go to each playlist -> Edit -> Revive Dead Items.
-#+end_src
-
-This should point all the paths to the new path at the new music directory
-location.
-** Rename Pattern
-#+begin_src text :tangle yes
-  %album artist% - %album%[ '('%date%')'] '['$if($strstr(%codec%,FLAC),FLAC,$if($strstr(%__codec_profile%,CBR),%__bitrate%,V0))']'/%tracknumber%. [%artist% - ]%title%
-#+end_src
-** Directory Style
-#+begin_src text :tangle yes
-  %genre%/%album artist%/%album%/%tracknumber% %title%
-#+end_src
-
-** Playback Statistics
-Write statistics to file tags.
-Import statistics from file tags.
-
-This is for play count, rating, etc.
-
-** Exporting all Playlists
-#+begin_src text :tangle yes
-  View -> Playlist Manager -> Right Click -> Save all Playlists -> m3u8
-
-  There are a few entries for Playlist Manager, choose the last one.
-
-  Save to: e.g. X:\playlists\windows
-#+end_src
-* Converting all FLAC to ALAC
-
-1. Make all music directories follow: [[*Directory Style][Directory Style]].
-2. Write all playback statistics to file tags.
-3. Export all playlists and convert them to use .m4a extension endings.
-4. Convert files in Foobar from FLAC to ALAC.
-Right click -> Convert -> FLAC to ALAC
-5. Import playlists with the m4a endings, delete original playlists.
-File -> Load Playlist -> Select all Playlists
-
-
 * Usage Example
 
 To automate this and let it run in the background:
@@ -267,4 +199,64 @@ Set up crontab to automatically start up the script.
 # Crontab:
 @reboot su james -c /bebe/script/foo_tunes/foo_tunes_tmux.sh >/bebe/script/foo_tunes/startup.log 2>&1
 */5 * * * * su james -c /bebe/script/foo_tunes/foo_tunes_tmux.sh >/bebe/script/foo_tunes/run.log 2>&1
+#+end_src
+
+* Notes about Foobar2000
+** Query Syntax
+https://wiki.hydrogenaud.io/index.php?title=Foobar2000:Query_syntax
+** How to create Autoplaylist?
+https://hydrogenaud.io/index.php?topic=92694.0
+
+#+begin_src text :tangle yes
+  Library -> Album List -> (right click an album) -> Create Autoplaylist
+#+end_src
+** Changing Music Directory Path
+For example, say the original media library was on J:/ and the new media library
+is on X:/
+
+#+begin_src text :tangle yes
+Go to File -> Preferences -> Music Library -> Music Folders -> Add -> Add new Path.
+#+end_src
+
+Let Foobar2000 populate all the music files from the new path. There will be
+duplicates until this whole process is finished. Once Foobar's music folder
+status is 'Monitoring', Use Playlist Revive.
+
+#+begin_src text :tangle yes
+Go to each playlist -> Edit -> Revive Dead Items.
+#+end_src
+
+This should point all the paths to the new path at the new music directory
+location.
+** Rename Pattern
+#+begin_src text :tangle yes
+  %album artist% - %album%[ '('%date%')'] '['$if($strstr(%codec%,FLAC),FLAC,$if($strstr(%__codec_profile%,CBR),%__bitrate%,V0))']'/%tracknumber%. [%artist% - ]%title%
+#+end_src
+** Directory Style
+#+begin_src text :tangle yes
+  %genre%/%album artist%/%album%/%tracknumber% %title%
+#+end_src
+
+** Playback Statistics
+Write statistics to file tags.
+Import statistics from file tags.
+
+This is for play count, rating, etc.
+** Exporting all Playlists
+#+begin_src text :tangle yes
+  View -> Playlist Manager -> Right Click -> Save all Playlists -> m3u8
+
+  There are a few entries for Playlist Manager, choose the last one.
+
+  Save to: e.g. X:\playlists\windows
+#+end_src
+** Converting FLAC to ALAC in Foobar
+- Make all music directories follow: [[*Directory Style][Directory Style]].
+- Write all playback statistics to file tags.
+- Export all playlists and convert them to use .m4a extension endings.
+- Convert files in Foobar from FLAC to ALAC.
+Right click -> Convert -> FLAC to ALAC (or use this script...)
+- Import playlists with the m4a endings, delete original playlists.
+#+begin_src text :tangle yes
+File -> Load Playlist -> Select all Playlists
 #+end_src
