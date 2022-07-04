@@ -268,6 +268,120 @@ class Resilio:
         return False
 
 
+class FlacToAlacConverter:
+    def __init__(self,
+                 input_dir: str,
+                 overwrite_output: bool,
+                 delete_original: bool,
+                 num_threads: int = 4):
+        self.input_dir = true_path(input_dir)
+        self.flacs = []
+        self.queue = queue.Queue()
+        self.threads = []
+        self.thread_kill_event = threading.Event()
+        self.overwrite_output = overwrite_output
+        self.delete_original = delete_original
+        self.num_threads = num_threads
+
+    def read(self):
+        print_if(f'Finding files recursive for: {self.input_dir}')
+
+        # Clean up trash first...
+        delete_some_trash(self.input_dir)
+
+        files = walk_files(self.input_dir)
+
+        flac_pattern = re.compile("\.flac$")
+        Flac_pattern = re.compile("\.Flac$")
+        flac_files = []
+        for f in files:
+            if re.search(flac_pattern, f) or re.search(Flac_pattern, f):
+                flac_files.append(f)
+
+        print_separator()
+        print_if(f'# of Flac files to convert: {len(flac_files)}')
+        print_if(f'Flac files to convert: {flac_files}')
+        print_separator()
+
+        self.flacs = flac_files
+
+    def convert_worker(self):
+        while not self.thread_kill_event.is_set():
+            try:
+                flac_path, alac_path = self.queue.get_nowait()
+            except:
+                # Loop exits here when all threads exhaust self.queue.
+                print('Exiting worker thread...')
+                break
+
+            print_separator()
+            if os.path.exists(alac_path):
+                if self.overwrite_output:
+                    print_if(f'{alac_path} exists... deleting first...')
+                    os.remove(alac_path)
+                else:
+                    print_if(f'{alac_path} already exists... skipping...')
+                    continue
+
+            print("Converting file {} of {}".format(
+                self.total_queue_size - self.queue.qsize(),
+                self.total_queue_size), flush=True)
+            print('From:', flac_path)
+            print('To:', alac_path)
+            print_separator()
+
+            if XLD_AVAILABLE:
+                # https://tmkk.undo.jp/xld/index_e.html
+                # This seems to get all the metadata and the coverart but it's
+                # OSX only...
+                # brew install xld
+                process = subprocess.run(
+                    ['xld', flac_path, '-f', 'alac', '-o', alac_path],
+                    capture_output=True, text=True)
+            else:
+                # Some metadata is lost doing this but using -movflags seems to
+                # make the metadata unrecognizable by foobar2000, iTunes, etc.
+                process = subprocess.run(
+                    # https://unix.stackexchange.com/questions/415477/lossless-audio-conversion-from-flac-to-alac-using-ffmpeg
+                    ['ffmpeg',
+                     # https://superuser.com/questions/326629/how-can-i-make-ffmpeg-be-quieter-less-verbose
+                     '-v', 'info' if VERBOSE else 'warning',
+                     '-i', flac_path, # input file
+                     '-acodec', 'alac', # 'force audio codec' to alac
+                     '-vcodec', 'copy', # 'force video codec' to copy stream
+                     alac_path], # 'output file'
+                    # https://stackoverflow.com/questions/41171791/how-to-suppress-or-capture-the-output-of-subprocess-run
+                    capture_output=True, text=True)
+
+            prefix = 'xld' if XLD_AVAILABLE else 'ffmpeg'
+            if process.stdout.strip():
+                print_if(f'{prefix}: standard out: {process.stdout}')
+            if process.stderr.strip():
+                print_if(f'{prefix}: {process.stderr}')
+
+            print_separator()
+
+            # Should we try deleting even if we potentially skip converting?
+            if self.delete_original:
+                print_if(f'Deleting {flac_path}...')
+                os.remove(flac_path)
+
+    def write(self):
+        if len(self.flacs) == 0:
+            print_if('No flacs to convert... skipping.')
+            return
+        for flac_path in self.flacs:
+            alac_path = alac_path_from_flac_path(flac_path=flac_path)
+            self.queue.put((flac_path, alac_path))
+            self.total_queue_size = self.queue.qsize()
+        for i in range(self.num_threads):
+            thread = threading.Thread(target=self.convert_worker)
+            thread.start()
+            self.threads.append(thread)
+        for thread in self.threads:
+            thread.join()
+
+
 class WatchHandler(FileSystemEventHandler):
     """File System Watch Handler for flac->alac changes."""
 
@@ -489,120 +603,6 @@ class JojoMusicManager:
         self.convert_playlists()
         self.convert_and_move_flacs()
         self.setup_file_watchers()
-
-
-class FlacToAlacConverter:
-    def __init__(self,
-                 input_dir: str,
-                 overwrite_output: bool,
-                 delete_original: bool,
-                 num_threads: int = 4):
-        self.input_dir = true_path(input_dir)
-        self.flacs = []
-        self.queue = queue.Queue()
-        self.threads = []
-        self.thread_kill_event = threading.Event()
-        self.overwrite_output = overwrite_output
-        self.delete_original = delete_original
-        self.num_threads = num_threads
-
-    def read(self):
-        print_if(f'Finding files recursive for: {self.input_dir}')
-
-        # Clean up trash first...
-        delete_some_trash(self.input_dir)
-
-        files = walk_files(self.input_dir)
-
-        flac_pattern = re.compile("\.flac$")
-        Flac_pattern = re.compile("\.Flac$")
-        flac_files = []
-        for f in files:
-            if re.search(flac_pattern, f) or re.search(Flac_pattern, f):
-                flac_files.append(f)
-
-        print_separator()
-        print_if(f'# of Flac files to convert: {len(flac_files)}')
-        print_if(f'Flac files to convert: {flac_files}')
-        print_separator()
-
-        self.flacs = flac_files
-
-    def convert_worker(self):
-        while not self.thread_kill_event.is_set():
-            try:
-                flac_path, alac_path = self.queue.get_nowait()
-            except:
-                # Loop exits here when all threads exhaust self.queue.
-                print('Exiting worker thread...')
-                break
-
-            print_separator()
-            if os.path.exists(alac_path):
-                if self.overwrite_output:
-                    print_if(f'{alac_path} exists... deleting first...')
-                    os.remove(alac_path)
-                else:
-                    print_if(f'{alac_path} already exists... skipping...')
-                    continue
-
-            print("Converting file {} of {}".format(
-                self.total_queue_size - self.queue.qsize(),
-                self.total_queue_size), flush=True)
-            print('From:', flac_path)
-            print('To:', alac_path)
-            print_separator()
-
-            if XLD_AVAILABLE:
-                # https://tmkk.undo.jp/xld/index_e.html
-                # This seems to get all the metadata and the coverart but it's
-                # OSX only...
-                # brew install xld
-                process = subprocess.run(
-                    ['xld', flac_path, '-f', 'alac', '-o', alac_path],
-                    capture_output=True, text=True)
-            else:
-                # Some metadata is lost doing this but using -movflags seems to
-                # make the metadata unrecognizable by foobar2000, iTunes, etc.
-                process = subprocess.run(
-                    # https://unix.stackexchange.com/questions/415477/lossless-audio-conversion-from-flac-to-alac-using-ffmpeg
-                    ['ffmpeg',
-                     # https://superuser.com/questions/326629/how-can-i-make-ffmpeg-be-quieter-less-verbose
-                     '-v', 'info' if VERBOSE else 'warning',
-                     '-i', flac_path, # input file
-                     '-acodec', 'alac', # 'force audio codec' to alac
-                     '-vcodec', 'copy', # 'force video codec' to copy stream
-                     alac_path], # 'output file'
-                    # https://stackoverflow.com/questions/41171791/how-to-suppress-or-capture-the-output-of-subprocess-run
-                    capture_output=True, text=True)
-
-            prefix = 'xld' if XLD_AVAILABLE else 'ffmpeg'
-            if process.stdout.strip():
-                print_if(f'{prefix}: standard out: {process.stdout}')
-            if process.stderr.strip():
-                print_if(f'{prefix}: {process.stderr}')
-
-            print_separator()
-
-            # Should we try deleting even if we potentially skip converting?
-            if self.delete_original:
-                print_if(f'Deleting {flac_path}...')
-                os.remove(flac_path)
-
-    def write(self):
-        if len(self.flacs) == 0:
-            print_if('No flacs to convert... skipping.')
-            return
-        for flac_path in self.flacs:
-            alac_path = alac_path_from_flac_path(flac_path=flac_path)
-            self.queue.put((flac_path, alac_path))
-            self.total_queue_size = self.queue.qsize()
-        for i in range(self.num_threads):
-            thread = threading.Thread(target=self.convert_worker)
-            thread.start()
-            self.threads.append(thread)
-        for thread in self.threads:
-            thread.join()
 
 
 class MusicManager:
