@@ -252,6 +252,36 @@ class Resilio:
         return False
 
 
+class WatchHandler(FileSystemEventHandler):
+    """File System Watch Handler for flac->alac changes."""
+
+    def __init__(self, fn, name: str, delay: int = 120,):
+        self.fn = fn
+        # Two minutes by default.
+        # Recommend to use a higher delay for more stability and a lower delay for
+        # more responsiveness.
+        self.delay = delay
+        self.timer: threading.Timer = None
+        self.name = name
+
+    def on_any_event(self, event):
+        print_if(f'WatchHandler: on_any_event: {event}!!')
+        if event.event_type == 'created':
+            print_if(f'{self.name}: scheduling timer...')
+
+            if self.timer:
+                print_if('Canceling current timer and creating a new one...')
+                self.timer.cancel()
+                self.timer = threading.Timer(self.delay, self.fn)
+            else:
+                print_if('Creating a new timer...')
+                self.timer = threading.Timer(self.delay, self.fn)
+
+            # Schedule timer to start.
+            print_if(f'Timer scheduled to start in {self.delay} seconds...')
+            self.timer.start()
+
+
 class MusicManager:
     def __init__(self,
                  sleep_time: int = 30,
@@ -450,36 +480,6 @@ class MusicManager:
         self.convert_playlists()
         self.convert_and_move_flacs()
         self.setup_file_watchers()
-
-
-class WatchHandler(FileSystemEventHandler):
-    """File System Watch Handler for flac->alac changes."""
-
-    def __init__(self, fn, name: str, delay: int = 120,):
-        self.fn = fn
-        # Two minutes by default.
-        # Recommend to use a higher delay for more stability and a lower delay for
-        # more responsiveness.
-        self.delay = delay
-        self.timer: threading.Timer = None
-        self.name = name
-
-    def on_any_event(self, event):
-        print_if(f'WatchHandler: on_any_event: {event}!!')
-        if event.event_type == 'created':
-            print_if(f'{self.name}: scheduling timer...')
-
-            if self.timer:
-                print_if('Canceling current timer and creating a new one...')
-                self.timer.cancel()
-                self.timer = threading.Timer(self.delay, self.fn)
-            else:
-                print_if('Creating a new timer...')
-                self.timer = threading.Timer(self.delay, self.fn)
-
-            # Schedule timer to start.
-            print_if(f'Timer scheduled to start in {self.delay} seconds...')
-            self.timer.start()
 
 
 class FlacToAlacConverter:
