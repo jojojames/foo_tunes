@@ -575,7 +575,7 @@ class GenreChanger():
             print_if(f'Tagging file: {file_name}')
 
             if extension == '.m4a' or extension == '.mp3':
-                if False and MP4TAGS_AVAILABLE and extension == '.m4a':
+                if MP4TAGS_AVAILABLE and extension == '.m4a':
                     process = subprocess.run([
                         'mp4tags',
                         '-genre',
