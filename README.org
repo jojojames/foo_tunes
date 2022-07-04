@@ -255,7 +255,9 @@ This is for play count, rating, etc.
 - Write all playback statistics to file tags.
 - Export all playlists and convert them to use .m4a extension endings.
 - Convert files in Foobar from FLAC to ALAC.
+#+begin_src text :tangle yes
 Right click -> Convert -> FLAC to ALAC (or use this script...)
+#+end_src
 - Import playlists with the m4a endings, delete original playlists.
 #+begin_src text :tangle yes
 File -> Load Playlist -> Select all Playlists
