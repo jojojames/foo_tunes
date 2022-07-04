@@ -621,6 +621,10 @@ def main():
     XLD_AVAILABLE = which('xld') # OSX Only
     FFMPEG_AVAILABLE = which('ffmpeg')
 
+    print_separator()
+    print_if(args)
+    print_separator()
+
     if jojo:
         music_manager = MusicManager(
             sleep_time=int(watch_sleep_time),
@@ -628,24 +632,6 @@ def main():
             convert_flac_delay=int(watch_convert_delay))
         music_manager.run()
         return
-
-    print_separator()
-    print_if(f'--m3u_input_dir: {m3u_input_dir}')
-    print_if(f'--m3u_output_dir: {m3u_output_dir}')
-    print_if(f'--m3u_flac_to_alac: {m3u_flac_to_alac}')
-    print_if(f'--m3u_windows_to_posix: {m3u_windows_to_posix}')
-    print_if(f'--m3u_from_str: {m3u_from_str}')
-    print_if(f'--m3u_to_str: {m3u_to_str}')
-    print_if(f'--flac_dir: {flac_dir}')
-    print_if(f'--dry: {DRY}')
-    print_if(f'--flac_overwrite_output: {flac_overwrite_output}')
-    print_if(f'--flac_delete_original: {flac_delete_original}')
-    print_if(f'--flac_threads: {flac_threads}')
-    print_if(f'--clean_up: {clean_up}')
-    print_if(f'--watch_playlist_delay: {watch_playlist_delay}')
-    print_if(f'--watch_convert_delay: {watch_convert_delay}')
-    print_if(f'--jojo: {jojo}')
-    print_separator()
 
     if clean_up:
         print(f'Cleaning up {clean_up}')
