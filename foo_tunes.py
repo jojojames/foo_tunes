@@ -170,6 +170,14 @@ def print_separator() -> None:
     if VERBOSE:
         print('---------------------------------------------------------------')
 
+def print_process_output(process, prefix: str) -> None:
+    if not process:
+        return
+
+    if process.stdout and process.stdout.strip():
+        print_if(f'{prefix}: stdout: {process.stdout}')
+    if process.stderr and process.stderr.strip():
+        print_if(f'{prefix}: stderr: {process.stderr}')
 
 class Playlist:
     """Class representing an m3u playlist."""
@@ -323,7 +331,7 @@ class FlacToAlacConverter:
                     print_if(f'{alac_path} already exists... skipping...')
                     continue
 
-            print("Converting file {} of {}".format(
+            print('Converting file {} of {}'.format(
                 self.total_queue_size - self.queue.qsize(),
                 self.total_queue_size), flush=True)
             print('From:', flac_path)
@@ -354,11 +362,7 @@ class FlacToAlacConverter:
                     capture_output=True, text=True)
 
             prefix = 'xld' if XLD_AVAILABLE else 'ffmpeg'
-            if process.stdout.strip():
-                print_if(f'{prefix}: standard out: {process.stdout}')
-            if process.stderr.strip():
-                print_if(f'{prefix}: {process.stderr}')
-
+            print_process_output(process, prefix=prefix)
             print_separator()
 
             # Should we try deleting even if we potentially skip converting?
