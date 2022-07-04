@@ -1,12 +1,12 @@
 #!/usr/bin/python3
 
-import argparse, glob, logging, os, platform, queue, re, subprocess, threading, time, traceback
+import argparse, glob, json, logging, os, platform, queue, re, subprocess, threading, time, traceback
 
 from datetime import datetime
 from functools import partial
 from pathlib import Path, PurePosixPath, PureWindowsPath
 from shutil import which, move
-from typing import List, Optional, Text
+from typing import Any, Dict, List, Optional, Text
 from watchdog.observers import Observer
 from watchdog.events import FileSystemEventHandler
 
@@ -78,6 +78,9 @@ parser.add_argument(
     help='If set, watch input directory for flac changes and automatically '
     'convert flacs in that directory using the related -flac flags.')
 
+parser.add_argument('--change_genres', default=False, action="store_true",
+                    help='If set, tweak genre tags to a common set of tags.')
+
 ### Watching for Changes
 
 parser.add_argument(
@@ -145,11 +148,30 @@ def alac_path_from_flac_path(flac_path: str) -> Text:
     alac_path = os.path.join(directory, base_name + '.m4a')
     return alac_path
 
+def temp_path_from_path(path: str) -> Text:
+    """Returns a filepath that mirrors path but with _temp suffixed to it."""
+    directory, file_name = os.path.split(path)
+    base_name, extension = os.path.splitext(file_name)
+    new_path = os.path.join(directory, base_name + '_temp' + extension)
+    return new_path
+
 def walk_files(directory: str) -> List[str]:
     # https://stackoverflow.com/questions/19309667/recursive-os-listdir
     return [os.path.join(dp, f)
                  for dp, dn, fn in os.walk(os.path.expanduser(directory))
                  for f in fn]
+
+def find_all_music_files(directory: str) -> List[str]:
+    files = walk_files(directory=directory)
+
+    music_pattern = re.compile('(\.flac$|\.Flac$|\.mp3|\.m4a)')
+    music_files = []
+    for f in files:
+        if re.search(music_pattern, f):
+            music_files.append(f)
+
+    print_if(f'Found music files: {music_files}')
+    return music_files
 
 def delete_some_trash(directory: str) -> None:
     """Delete extraneous trash files that may corrupt entire process."""
@@ -169,6 +191,9 @@ def delete_some_trash(directory: str) -> None:
 def print_separator() -> None:
     if VERBOSE:
         print('---------------------------------------------------------------')
+
+def print_json(obj) -> None:
+    print(json.dumps(obj, indent=2))
 
 def print_process_output(process, prefix: str) -> None:
     if not process:
@@ -385,6 +410,247 @@ class FlacToAlacConverter:
         for thread in self.threads:
             thread.join()
 
+class FFProbe():
+    def __init__(self, input_file: str):
+        self.input_file = true_path(input_file)
+
+    def get_genre(self) -> Optional[str]:
+        """Returns the metadata field Genre in this input file."""
+        if ((tags := self.get_tags()) and (genre_tag := self.get_genre_tag())) is not None:
+            return tags[genre_tag]
+        return None
+
+    def get_genre_tag(self) -> Optional[str]:
+        """Returns the tag name for Genre used in this input file."""
+        if (tags := self.get_tags()) is not None:
+            possible_genre_tags = ["Genre", "GENRE", "genre"]
+            for genre_tag in possible_genre_tags:
+                if genre_tag in tags:
+                    return genre_tag
+
+        return None
+
+    def get_tags(self) -> Optional[Dict[str, Any]]:
+        """Get tags from ffprobe result."""
+        if not self.result:
+            return None
+
+        if "format" not in self.result:
+            return None
+
+        format = self.result["format"]
+
+        if "tags" not in format:
+            return None
+
+        tags = format["tags"]
+        return tags
+
+    def read(self):
+        # https://ffmpeg.org/ffprobe.html
+        # https://gist.github.com/nrk/2286511
+        try:
+            process = subprocess.run(
+                ['ffprobe',
+                 self.input_file,
+                 '-v',
+                 'quiet',
+                 '-print_format',
+                 'json',
+                 '-show_format',
+                 '-show_streams',
+                 '-hide_banner'],
+                capture_output=True, text=True)
+
+            print_if(process.stderr)
+            json_string = process.stdout
+            ffprobe_result = json.loads(json_string)
+            # print_json(ffprobe_result)
+            self.result = ffprobe_result
+            if (tags := self.get_tags()) is not None:
+                print_separator()
+                print_if(f'{self.input_file}:')
+                print_json(tags)
+                print_separator()
+        except:
+            print('Exception calling ffprobe...')
+            traceback.print_exc()
+
+
+class GenreChanger():
+    def __init__(self,
+                 input_dir: str,
+                 num_threads: int = 4):
+        self.input_dir = true_path(input_dir)
+        self.queue = queue.Queue()
+        self.threads = []
+        self.thread_kill_event = threading.Event()
+        self.num_threads = num_threads
+
+    def read(self):
+        self.files = find_all_music_files(self.input_dir)
+
+    def find_appropriate_genre(self, genre: Optional[str]) -> Optional[str]:
+        if not genre:
+            return None
+
+        ALTERNATIVE_ROCK = "Alternative Rock"
+        CPOP = "C-Pop"
+        HIPHOP = "Hip-Hop"
+        JPOP = "J-Pop"
+        KPOP = "K-Pop"
+        ROCK = "Rock"
+        VPOP = "V-Pop"
+        dictionary: Dict = {
+            "alternrock": ALTERNATIVE_ROCK,
+            "c-pop": CPOP,
+            "cpop": CPOP,
+            "chinese-pop": CPOP,
+            "chinesepop": CPOP,
+            "chinese": CPOP,
+            "mandarin": CPOP,
+            "cantonese": CPOP,
+            "j-pop": JPOP,
+            "jpop": JPOP,
+            "japanese-pop": JPOP,
+            "japanesepop": JPOP,
+            "japanese": JPOP,
+            "k-pop": KPOP,
+            "kpop": KPOP,
+            "korean-pop": KPOP,
+            "koreanpop": KPOP,
+            "korean": KPOP,
+            "rap": HIPHOP,
+            "rock": ROCK,
+            "v-pop": VPOP,
+            "vpop": VPOP,
+            "vietnamese-pop": VPOP,
+            "vietnamesepop": VPOP,
+            "vietnamese": VPOP,
+        }
+
+        if genre.lower() in dictionary:
+            return dictionary[genre.lower()]
+        else:
+            return genre
+
+    def convert_worker(self):
+        while not self.thread_kill_event.is_set():
+            try:
+                music_file = self.queue.get_nowait()
+            except:
+                # Loop exits here when all threads exhaust self.queue.
+                print('Exiting worker thread...')
+                break
+
+            ffprobe = FFProbe(input_file=music_file)
+            ffprobe.read()
+
+            genre_tag = ffprobe.get_genre_tag()
+            genre = ffprobe.get_genre()
+            appropriate_genre = self.find_appropriate_genre(genre)
+
+            if not genre_tag:
+                print_if(f'{music_file}: no genre tag found... skipping.')
+                continue
+
+            if not genre:
+                print_if(f'{music_file}: no genre found... skipping.')
+                continue
+
+            if genre == appropriate_genre:
+                print_if(f'{music_file}: genre is already correct... skipping.')
+                continue
+
+            print_separator()
+            print('Tagging file {} of {}'.format(
+                self.total_queue_size - self.queue.qsize(),
+                self.total_queue_size), flush=True)
+            print_separator()
+
+            directory, file_name = os.path.split(music_file)
+            base_name, extension = os.path.splitext(file_name)
+            print_if(f'Tagging file: {file_name}')
+
+            if extension == '.m4a' or extension == '.mp3':
+                if False and MP4TAGS_AVAILABLE and extension == '.m4a':
+                    process = subprocess.run([
+                        'mp4tags',
+                        '-genre',
+                        appropriate_genre,
+                        music_file # mp4tags can edit in place!
+                    ], capture_output=True, text=True)
+                    print_process_output(process, 'mp4tags')
+                else:
+                    # ffmpeg can't edit in place so convert to a temp location
+                    # first.
+                    temp_path = temp_path_from_path(music_file)
+                    print_if(f'Tagging from {music_file} to temp file: '
+                             f'{temp_path}...')
+                    command = [
+                        'ffmpeg',
+                        '-y',
+                        '-v', 'warning' if VERBOSE else 'warning',
+                        '-i',
+                        music_file,
+                        '-metadata',
+                        f'{genre_tag}={appropriate_genre}',
+                        '-c', 'copy',
+                        temp_path
+                    ]
+                    print_if(command)
+                    process = subprocess.run(command,
+                                             capture_output=True,
+                                             text=True)
+
+                    # Then move the temp file...
+                    print_if(f'Removing {music_file}... ' )
+                    os.remove(music_file)
+                    print_if(f'Moving {temp_path} to {music_file}...')
+                    move(temp_path, music_file)
+                    print_process_output(process, 'ffmpeg tag')
+
+            if extension == '.flac' or extension == '.Flac':
+                if not METAFLAC_AVAILABLE:
+                    print('metaflac unavailable for tagging flac files.')
+                    continue
+
+                print_if(f'Removing tag {genre_tag} from {music_file}...')
+                # metaflac doesn't seem to have 'replace' as functionality
+                # so remove the tag first.
+                process = subprocess.run([
+                    'metaflac',
+                    music_file,
+                    f'--remove-tag={genre_tag}'
+                ], capture_output=True, text=True)
+                print_process_output(process, 'metaflac remove-tag')
+
+                print_if(f'Setting tag {genre_tag}={appropriate_genre} to '
+                         f'{music_file}...')
+                process = subprocess.run([
+                    'metaflac',
+                    music_file,
+                    f'--set-tag={genre_tag}={appropriate_genre}'
+                ])
+                print_process_output(process, 'metaflac set-tag')
+
+            print_separator()
+
+
+    def write(self):
+        if len(self.files) == 0:
+            print_if('No music files to tag... skipping.')
+            return
+        for f in self.files:
+            self.queue.put(f)
+            self.total_queue_size = self.queue.qsize()
+        for i in range(self.num_threads):
+            thread = threading.Thread(target=self.convert_worker)
+            thread.start()
+            self.threads.append(thread)
+        for thread in self.threads:
+            thread.join()
+
 
 class WatchHandler(FileSystemEventHandler):
     """File System Watch Handler for flac->alac changes."""
@@ -526,6 +792,10 @@ class JojoMusicManager:
             self.converter.read()
             self.converter.write()
             print('Finished converting...')
+            genre_changer = GenreChanger(flac_dir)
+            genre_changer.read()
+            genre_changer.write()
+            print('Finished tagging...')
         except KeyboardInterrupt:
             if self.converter:
                 self.converter.thread_kill_event.set()
@@ -688,9 +958,18 @@ class MusicManager:
         try:
             converter.read()
             converter.write()
+
+            if self.args.change_genres:
+                genre_changer = GenreChanger(args.flac_dir)
+                genre_changer.read()
+                genre_changer.write()
+
         except KeyboardInterrupt:
             if converter:
                 converter.thread_kill_event.set()
+
+            if genre_changer:
+                genre_changer.thread_kill_event.set()
 
             print("Done...")
 
@@ -744,13 +1023,15 @@ class MusicManager:
 
 
 def main():
-    global DRY, FFMPEG_AVAILABLE, VERBOSE, XLD_AVAILABLE
+    global DRY, FFMPEG_AVAILABLE, METAFLAC_AVAILABLE, MP4TAGS_AVAILABLE, VERBOSE, XLD_AVAILABLE
     args = parser.parse_args()
     VERBOSE = args.verbose or args.jojo
     DRY = args.dry
 
     XLD_AVAILABLE = which('xld') # OSX Only
     FFMPEG_AVAILABLE = which('ffmpeg')
+    MP4TAGS_AVAILABLE = which('mp4tags')
+    METAFLAC_AVAILABLE = which('metaflac')
 
     print_separator()
     print_if(args)

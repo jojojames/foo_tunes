@@ -66,6 +66,11 @@ class FooTunesTest(unittest.TestCase):
         self.assertEqual(
             foo_tunes.alac_path_from_flac_path('/a/b/c.flac'), '/a/b/c.m4a')
 
+    def test_temp_path_from_path(self):
+        self.assertEqual(
+            foo_tunes.temp_path_from_path('/a/b/c/abc.mp3'),
+            '/a/b/c/abc_temp.mp3')
+
     def test_delete_some_trash(self):
         flac_dir = os.path.join(os.path.dirname(__file__), 'testdata/flac_dir')
 

@@ -67,6 +67,7 @@ Windows to OSX, etc.
 --flac_delete_original # Default = False
 --flac_convert_threads # Default = 4
 --flac_watch
+--change_genres
 #+end_src
 
 ** Watching directory for changes
