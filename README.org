@@ -204,12 +204,29 @@ Set up crontab to automatically start up the script.
 * Notes about Foobar2000
 ** Query Syntax
 https://wiki.hydrogenaud.io/index.php?title=Foobar2000:Query_syntax
+
 ** How to create Autoplaylist?
 https://hydrogenaud.io/index.php?topic=92694.0
+https://wiki.hydrogenaud.io/index.php?title=Foobar2000:Title_Formatting_Reference#.25directoryname.25
 
 #+begin_src text :tangle yes
   Library -> Album List -> (right click an album) -> Create Autoplaylist
 #+end_src
+** Autoplaylist / Filter Examples
+*** Querying directories with "_TO_PROCESS" in the name.
+#+begin_src text :tangle yes
+%path% HAS "_TO_PROCESS"
+#+end_src
+** Adding to existing playlists
+https://hydrogenaud.io/index.php?topic=93910.0
+To prevent the playlists from being "erased":
+
+#+begin_src text :tangle yes
+Go to Preferences -> Shell integration and tick "set enqueue as default action"
+#+end_src
+
+This adds the songs to the playlist rather than replacing the playlist.
+You can then drag and drop individual tunes into any playlist.
 ** Changing Music Directory Path
 For example, say the original media library was on J:/ and the new media library
 is on X:/
