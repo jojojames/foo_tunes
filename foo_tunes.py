@@ -11,6 +11,11 @@ from watchdog.observers import Observer
 from watchdog.events import FileSystemEventHandler
 
 
+### Constants
+
+CONVERT_PLAYLIST_DELAY = 30
+CONVERT_FLAC_DELAY = 120
+
 parser = argparse.ArgumentParser(description='Foobar2000 -> iTunes utilities')
 
 ### Playlist / .m3u8 Management
@@ -66,12 +71,12 @@ parser.add_argument(
     help='Number of seconds to sleep for when watching directory changes.')
 
 parser.add_argument(
-    '--watch_playlist_delay',
+    '--watch_playlist_delay', default=CONVERT_PLAYLIST_DELAY,
     help='Number of seconds to wait before managing playlists upon directory'
     ' changes.')
 
 parser.add_argument(
-    '--watch_convert_delay',
+    '--watch_convert_delay', default=CONVERT_FLAC_DELAY,
     help='Number of seconds to wait before converting flacs upon directory'
     ' changes.')
 
@@ -89,6 +94,7 @@ parser.add_argument('--jojo', default=False, action="store_true",
 
 parser.add_argument('-v', '--verbose', default=False, action="store_true",
                     help='Verbose logging.')
+
 
 def print_if(str: str) -> None:
     """Print statement only if VERBOSE or DRY is set."""
@@ -245,8 +251,21 @@ class Resilio:
 
         return False
 
+
 class MusicManager:
-    def __init__(self, sleep_time: int = 30):
+    def __init__(self,
+                 sleep_time: int = 30,
+                 convert_playlist_delay: int = CONVERT_PLAYLIST_DELAY,
+                 convert_flac_delay: int = CONVERT_FLAC_DELAY):
+        """
+        sleep_time: How long watcher sleeps for.
+
+        convert_playlist_delay: How long to wait before converting m3u
+        playlists after watcher finds a change.
+
+        convert_flac_delay: How long to wait before converting and moving
+        flacs after watcher finds a change.
+        """
         self.resilio = Resilio(sync_dir=self.get_sync_directory())
 
         self.playlist_manager = PlaylistManager(
@@ -259,6 +278,8 @@ class MusicManager:
             delete_original=True)
 
         self.sleep_time = sleep_time
+        self.convert_playlist_delay = convert_playlist_delay
+        self.convert_flac_delay = convert_flac_delay
 
     def get_playlist_directory(self):
         if platform.system() == 'Windows':
@@ -389,16 +410,21 @@ class MusicManager:
             traceback.print_exc()
 
     def setup_file_watchers(self):
-        MusicManager.music_manager = self
         self.playlist_observer = Observer()
-        self.playlist_observer.schedule(PlaylistWatchHandler(),
-                                        self.get_windows_m3u_directory(),
-                                        recursive=False)
+        self.playlist_observer.schedule(
+            WatchHandler(fn=self.convert_playlists,
+                         name='Playlist Observer',
+                         delay=self.convert_playlist_delay),
+            self.get_windows_m3u_directory(),
+            recursive=False)
 
         self.converter_observer = Observer()
-        self.converter_observer.schedule(ConverterWatchHandler(),
-                                         self.get_flac_directory(),
-                                         recursive=False)
+        self.converter_observer.schedule(
+            WatchHandler(fn=self.convert_and_move_flacs,
+                         name='FLAC Observer',
+                         delay=self.convert_flac_delay),
+            self.get_flac_directory(),
+            recursive=False)
 
         self.playlist_observer.start()
         self.converter_observer.start()
@@ -412,7 +438,7 @@ class MusicManager:
         except KeyboardInterrupt:
             print('User triggered abort.')
         except Exception:
-            print('Exception while looping...')
+            print('Exception while observing...')
             traceback.print_exc()
         finally:
             self.playlist_observer.stop()
@@ -426,68 +452,34 @@ class MusicManager:
         self.setup_file_watchers()
 
 
-class PlaylistWatchHandler(FileSystemEventHandler):
-    """File System Watch Handler for playlist changes."""
-
-    timer: threading.Timer = None
-    # Thirty seconds by default.
-    # Recommend to use a higher delay for more stability and a lower delay for
-    # more responsiveness.
-    delay = 30
-
-    @staticmethod
-    def on_any_event(event):
-        print_if(f'PlaylistWatchHandler: on_any_event: {event}!!')
-        if event.event_type == 'created':
-            print_if('PlaylistWatchHandler: Scheduling timer to convert '
-                     'playlists...')
-
-            delay = PlaylistWatchHandler.delay
-            if PlaylistWatchHandler.timer:
-                print_if('Canceling current timer and creating a new one...')
-                PlaylistWatchHandler.timer.cancel()
-                PlaylistWatchHandler.timer = threading.Timer(
-                    delay, MusicManager.music_manager.convert_playlists)
-            else:
-                print_if('Creating a new timer...')
-                PlaylistWatchHandler.timer = threading.Timer(
-                    delay, MusicManager.music_manager.convert_playlists)
-
-            # Schedule timer to start.
-            print_if(f'Timer scheduled to start in {delay} seconds...')
-            PlaylistWatchHandler.timer.start()
-
-
-class ConverterWatchHandler(FileSystemEventHandler):
+class WatchHandler(FileSystemEventHandler):
     """File System Watch Handler for flac->alac changes."""
 
-    timer: threading.Timer = None
-    # Two minutes by default.
-    # Recommend to use a higher delay for more stability and a lower delay for
-    # more responsiveness.
-    delay = 120
+    def __init__(self, fn, name: str, delay: int = 120,):
+        self.fn = fn
+        # Two minutes by default.
+        # Recommend to use a higher delay for more stability and a lower delay for
+        # more responsiveness.
+        self.delay = delay
+        self.timer: threading.Timer = None
+        self.name = name
 
-    @staticmethod
-    def on_any_event(event):
-        print_if(f'ConverterWatchHandler: on_any_event: {event}!!')
+    def on_any_event(self, event):
+        print_if(f'WatchHandler: on_any_event: {event}!!')
         if event.event_type == 'created':
-            print_if('ConverterWatchHandler: Scheduling timer to convert '
-                     'flacs...')
+            print_if(f'{self.name}: scheduling timer...')
 
-            delay = ConverterWatchHandler.delay
-            if ConverterWatchHandler.timer:
+            if self.timer:
                 print_if('Canceling current timer and creating a new one...')
-                ConverterWatchHandler.timer.cancel()
-                ConverterWatchHandler.timer = threading.Timer(
-                    delay, MusicManager.music_manager.convert_and_move_flacs)
+                self.timer.cancel()
+                self.timer = threading.Timer(self.delay, self.fn)
             else:
                 print_if('Creating a new timer...')
-                ConverterWatchHandler.timer = threading.Timer(
-                    delay, MusicManager.music_manager.convert_and_move_flacs)
+                self.timer = threading.Timer(self.delay, self.fn)
 
             # Schedule timer to start.
-            print_if(f'Timer scheduled to start in {delay} seconds...')
-            ConverterWatchHandler.timer.start()
+            print_if(f'Timer scheduled to start in {self.delay} seconds...')
+            self.timer.start()
 
 
 class FlacToAlacConverter:
@@ -506,7 +498,7 @@ class FlacToAlacConverter:
         self.num_threads = num_threads
 
     def read(self):
-        print_if('Finding files recursive for: {self.input_dir}')
+        print_if(f'Finding files recursive for: {self.input_dir}')
 
         # Clean up trash first...
         delete_some_trash(self.input_dir)
@@ -629,14 +621,11 @@ def main():
     XLD_AVAILABLE = which('xld') # OSX Only
     FFMPEG_AVAILABLE = which('ffmpeg')
 
-    if watch_playlist_delay:
-        PlaylistWatchHandler.delay = int(watch_playlist_delay)
-
-    if watch_convert_delay:
-        ConverterWatchHandler.delay = int(watch_convert_delay)
-
     if jojo:
-        music_manager = MusicManager(sleep_time=int(watch_sleep_time))
+        music_manager = MusicManager(
+            sleep_time=int(watch_sleep_time),
+            convert_playlist_delay=int(watch_playlist_delay),
+            convert_flac_delay=int(watch_convert_delay))
         music_manager.run()
         return
 
