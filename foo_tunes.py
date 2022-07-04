@@ -425,14 +425,16 @@ class JojoMusicManager:
             if not os.path.exists(move_to):
                 os.makedirs(move_to)
 
-                ds_store_pattern = re.compile('\.DS_Store')
-                for music_dir in music_dirs:
-                    if re.search(ds_store_pattern, music_dir):
-                        continue
-                    from_dir = os.path.join(flac_dir, music_dir)
-                    to_dir = os.path.join(move_to, music_dir)
-                    move(from_dir, to_dir)
-                    print(f'Moved {from_dir} to {to_dir}...')
+            print_if(f'Music directories to move {music_dirs}')
+            ds_store_pattern = re.compile('\.DS_Store')
+            for music_dir in music_dirs:
+                if re.search(ds_store_pattern, music_dir):
+                    continue
+                print_if(f'Attempting to move {from_dir} to {to_dir}')
+                from_dir = os.path.join(flac_dir, music_dir)
+                to_dir = os.path.join(move_to, music_dir)
+                move(from_dir, to_dir)
+                print_if(f'Moved {from_dir} to {to_dir}...')
         except KeyboardInterrupt:
             print("Done...")
         except Exception:
