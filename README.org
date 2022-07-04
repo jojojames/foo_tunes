@@ -52,7 +52,10 @@ Windows to OSX, etc.
 
     /Users/james/Music/K-Pop/IU/Love poem/03 Blueming.m4a
 #+end_src
-
+** Watching directory for changes
+#+begin_src sh :tangle yes
+--m3u_watch
+#+end_src
 ** Using every flag
 
 #+begin_src sh :tangle yes
@@ -63,6 +66,7 @@ python foo_tunes.py \
 --m3u_windows_to_posix \
 --m3u_from_str='X:/music' \
 --m3u_to_str='/Users/james/Music' \
+--m3u_watch \
 --verbose
 #+end_src
 
@@ -84,6 +88,12 @@ python foo_tunes.py \
 --flac_overwrite_output # Default = False
 --flac_delete_original # Default = False
 --flac_convert_threads # Default = 4
+--flac_watch
+#+end_src
+
+** Watching directory for changes
+#+begin_src sh :tangle yes
+--flac_watch
 #+end_src
 * Run
 ** Write to output dir

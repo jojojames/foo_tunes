@@ -49,6 +49,13 @@ parser.add_argument('--m3u_from_str',
 parser.add_argument('--m3u_to_str',
                     help='String in playlist line to replace to.')
 
+parser.add_argument(
+    '--m3u_watch',
+    default=False,
+    action="store_true",
+    help='If set, watch input directory for playlist changes and automatically '
+    'convert playlists in that directory using the related -m3u flags.')
+
 ### FLAC Conversion
 
 parser.add_argument('--flac_dir',
@@ -61,22 +68,29 @@ parser.add_argument('--flac_overwrite_output', default=False, action="store_true
 parser.add_argument('--flac_delete_original', default=False, action="store_true",
                     help='If set, delete .flac version after converting to alac.')
 
-parser.add_argument('--flac_threads', default='4',
+parser.add_argument('--flac_threads', default=4, type=int,
                     help='Number of threads to use when converting.')
+
+parser.add_argument(
+    '--flac_watch',
+    default=False,
+    action="store_true",
+    help='If set, watch input directory for flac changes and automatically '
+    'convert flacs in that directory using the related -flac flags.')
 
 ### Watching for Changes
 
 parser.add_argument(
-    '--watch_sleep_time', default='30',
+    '--watch_sleep_time', default=30, type=int,
     help='Number of seconds to sleep for when watching directory changes.')
 
 parser.add_argument(
-    '--watch_playlist_delay', default=CONVERT_PLAYLIST_DELAY,
+    '--watch_playlist_delay', default=CONVERT_PLAYLIST_DELAY, type=int,
     help='Number of seconds to wait before managing playlists upon directory'
     ' changes.')
 
 parser.add_argument(
-    '--watch_convert_delay', default=CONVERT_FLAC_DELAY,
+    '--watch_convert_delay', default=CONVERT_FLAC_DELAY, type=int,
     help='Number of seconds to wait before converting flacs upon directory'
     ' changes.')
 
@@ -255,19 +269,19 @@ class Resilio:
 class WatchHandler(FileSystemEventHandler):
     """File System Watch Handler for flac->alac changes."""
 
-    def __init__(self, fn, name: str, delay: int = 120,):
+    def __init__(self, fn, ob_name: str, delay: int = 120,):
         self.fn = fn
         # Two minutes by default.
         # Recommend to use a higher delay for more stability and a lower delay for
         # more responsiveness.
         self.delay = delay
         self.timer: threading.Timer = None
-        self.name = name
+        self.ob_name = ob_name
 
     def on_any_event(self, event):
         print_if(f'WatchHandler: on_any_event: {event}!!')
         if event.event_type == 'created':
-            print_if(f'{self.name}: scheduling timer...')
+            print_if(f'{self.ob_name}: scheduling timer...')
 
             if self.timer:
                 print_if('Canceling current timer and creating a new one...')
@@ -282,20 +296,10 @@ class WatchHandler(FileSystemEventHandler):
             self.timer.start()
 
 
-class MusicManager:
-    def __init__(self,
-                 sleep_time: int = 30,
-                 convert_playlist_delay: int = CONVERT_PLAYLIST_DELAY,
-                 convert_flac_delay: int = CONVERT_FLAC_DELAY):
-        """
-        sleep_time: How long watcher sleeps for.
+class JojoMusicManager:
+    def __init__(self, args):
+        self.args = args
 
-        convert_playlist_delay: How long to wait before converting m3u
-        playlists after watcher finds a change.
-
-        convert_flac_delay: How long to wait before converting and moving
-        flacs after watcher finds a change.
-        """
         self.resilio = Resilio(sync_dir=self.get_sync_directory())
 
         self.playlist_manager = PlaylistManager(
@@ -306,10 +310,6 @@ class MusicManager:
             input_dir=self.get_flac_directory(),
             overwrite_output=True,
             delete_original=True)
-
-        self.sleep_time = sleep_time
-        self.convert_playlist_delay = convert_playlist_delay
-        self.convert_flac_delay = convert_flac_delay
 
     def get_playlist_directory(self):
         if platform.system() == 'Windows':
@@ -440,41 +440,46 @@ class MusicManager:
             traceback.print_exc()
 
     def setup_file_watchers(self):
+        self.observers: List[Observer] = []
+
         self.playlist_observer = Observer()
         self.playlist_observer.schedule(
             WatchHandler(fn=self.convert_playlists,
-                         name='Playlist Observer',
-                         delay=self.convert_playlist_delay),
+                         ob_name='Playlist Observer',
+                         delay=self.args.watch_playlist_delay),
             self.get_windows_m3u_directory(),
             recursive=False)
+        print_if(f'Will start observer with name: Playlist Observer...')
+        self.observers.append(self.playlist_observer)
 
         self.converter_observer = Observer()
         self.converter_observer.schedule(
             WatchHandler(fn=self.convert_and_move_flacs,
-                         name='FLAC Observer',
-                         delay=self.convert_flac_delay),
+                         ob_name='FLAC Observer',
+                         delay=self.args.watch_convert_delay),
             self.get_flac_directory(),
             recursive=False)
+        print_if(f'Will start observer with name: FLAC Observer...')
+        self.observers.append(self.converter_observer)
 
-        self.playlist_observer.start()
-        self.converter_observer.start()
+        for observer in self.observers:
+            observer.start()
 
         try:
             while True:
                 now = datetime.now()
                 current_time = now.strftime("%H:%M:%S")
                 print_if(f'Time: {current_time}.. Observing changes...')
-                time.sleep(self.sleep_time)
+                time.sleep(self.args.watch_sleep_time)
         except KeyboardInterrupt:
             print('User triggered abort.')
         except Exception:
             print('Exception while observing...')
             traceback.print_exc()
         finally:
-            self.playlist_observer.stop()
-            self.playlist_observer.join()
-            self.converter_observer.stop()
-            self.converter_observer.join()
+            for observer in self.observers:
+                observer.stop()
+                observer.join()
 
     def run(self):
         self.convert_playlists()
@@ -596,26 +601,144 @@ class FlacToAlacConverter:
             thread.join()
 
 
-def main():
+class MusicManager:
+    def __init__(self, args):
+        self.args = args
 
+    def run(self):
+        if (not self.args.m3u_flac_to_alac and
+            not self.args.m3u_windows_to_posix and
+            not self.args.flac_dir):
+            print('Need to specify action... e.g. --m3u_flac_to_alac')
+            return
+        self.convert_playlists()
+        self.convert_flacs()
+        self.watch()
+
+    def convert_playlists(self):
+        m3u_flac_to_alac = self.args.m3u_flac_to_alac
+        m3u_windows_to_posix = self.args.m3u_windows_to_posix
+        m3u_from_str = self.args.m3u_from_str
+        m3u_to_str = self.args.m3u_to_str
+        m3u_input_dir = self.args.m3u_input_dir
+        m3u_output_dir = self.args.m3u_output_dir
+
+        if (m3u_flac_to_alac or m3u_windows_to_posix or
+            (m3u_from_str and m3u_to_str)):
+            if not m3u_input_dir:
+                print('Specify --m3u_input_dir...')
+                return
+            playlist_manager = PlaylistManager(input_dir=m3u_input_dir,
+                                               output_dir=m3u_output_dir)
+            try:
+                start = time.process_time()
+                playlist_manager.read()
+                if m3u_flac_to_alac:
+                    playlist_manager.convert_flac_to_alac()
+                    print_if(
+                        f'flac->alac, elapsed: {time.process_time() - start}')
+
+                if m3u_windows_to_posix:
+                    playlist_manager.convert_windows_to_posix()
+                    print_if('windows->posix, elapsed: '
+                             f'{time.process_time() - start}')
+
+                if m3u_from_str and m3u_to_str:
+                    playlist_manager.convert_from_str_to_str(
+                        from_str=m3u_from_str, to_str=m3u_to_str)
+                    print_if(f'{m3u_from_str}->{m3u_to_str}, elapsed: '
+                             f'{time.process_time() - start}')
+
+                playlist_manager.write()
+                print_if('Finished writing, elapsed: '
+                         f'{time.process_time() - start}')
+            except KeyboardInterrupt:
+                print('Done...')
+            except Exception:
+                print('Exception while processing playlists...')
+                traceback.print_exc()
+
+    def convert_flacs(self):
+        flac_dir = self.args.flac_dir
+        if not flac_dir:
+            return
+
+        flac_overwrite_output = self.args.flac_overwrite_output
+        flac_delete_original = self.args.flac_delete_original
+        flac_threads = self.args.flac_threads
+
+        if not FFMPEG_AVAILABLE and not XLD_AVAILABLE:
+            print('Install ffmpeg or xld to use --flac_dir.')
+            return
+
+        converter = FlacToAlacConverter(
+            input_dir=flac_dir,
+            overwrite_output=flac_overwrite_output,
+            delete_original=flac_delete_original,
+            num_threads=int(flac_threads))
+
+        try:
+            converter.read()
+            converter.write()
+        except KeyboardInterrupt:
+            if converter:
+                converter.thread_kill_event.set()
+
+            print("Done...")
+
+    def watch(self):
+        self.observers: List[Observer] = []
+
+        if self.args.m3u_watch:
+            self.playlist_observer = Observer()
+            self.playlist_observer.schedule(
+                WatchHandler(fn=self.convert_playlists,
+                             ob_name='Playlist Observer',
+                             delay=self.args.watch_playlist_delay),
+                true_path(self.args.m3u_input_dir),
+                recursive=False)
+            print_if(f'Will start observer with name: Playlist Observer...')
+            self.observers.append(self.playlist_observer)
+
+        if self.args.flac_watch:
+            self.converter_observer = Observer()
+            self.converter_observer.schedule(
+                WatchHandler(fn=self.convert_flacs,
+                             ob_name='FLAC Observer',
+                             delay=self.args.watch_convert_delay),
+                true_path(self.args.flac_dir),
+                recursive=False)
+            print_if(f'Will start observer with name: FLAC Observer...')
+            self.observers.append(self.converter_observer)
+
+        if len(self.observers) == 0:
+            print_if('Not watching any directories, so finishing!')
+            return
+
+        for observer in self.observers:
+            observer.start()
+
+        try:
+            while True:
+                now = datetime.now()
+                current_time = now.strftime("%H:%M:%S")
+                print_if(f'Time: {current_time}.. Observing changes...')
+                time.sleep(self.args.watch_sleep_time)
+        except KeyboardInterrupt:
+            print('User triggered abort.')
+        except Exception:
+            print('Exception while observing...')
+            traceback.print_exc()
+        finally:
+            for observer in self.observers:
+                observer.stop()
+                observer.join()
+
+
+def main():
     global DRY, FFMPEG_AVAILABLE, VERBOSE, XLD_AVAILABLE
     args = parser.parse_args()
-    m3u_input_dir = args.m3u_input_dir
-    m3u_output_dir = args.m3u_output_dir
-    m3u_flac_to_alac = args.m3u_flac_to_alac
-    m3u_windows_to_posix = args.m3u_windows_to_posix
-    m3u_from_str = args.m3u_from_str
-    m3u_to_str = args.m3u_to_str
-    flac_dir = args.flac_dir
-    flac_overwrite_output = args.flac_overwrite_output
-    flac_delete_original = args.flac_delete_original
-    flac_threads = args.flac_threads
-    jojo = args.jojo
-    clean_up = args.clean_up
-    watch_sleep_time = args.watch_sleep_time
-    watch_playlist_delay = args.watch_playlist_delay
-    watch_convert_delay = args.watch_convert_delay
-    VERBOSE = args.verbose or jojo
+    VERBOSE = args.verbose or args.jojo
     DRY = args.dry
 
     XLD_AVAILABLE = which('xld') # OSX Only
@@ -625,66 +748,16 @@ def main():
     print_if(args)
     print_separator()
 
-    if jojo:
-        music_manager = MusicManager(
-            sleep_time=int(watch_sleep_time),
-            convert_playlist_delay=int(watch_playlist_delay),
-            convert_flac_delay=int(watch_convert_delay))
-        music_manager.run()
-        return
-
-    if clean_up:
+    if args.clean_up:
         print(f'Cleaning up {clean_up}')
         delete_some_trash(clean_up)
 
-    if not m3u_flac_to_alac and not m3u_windows_to_posix and not flac_dir:
-        print('Need to specify action... e.g. --m3u_flac_to_alac')
-        return
-
-    try:
-        if (m3u_flac_to_alac or m3u_windows_to_posix or
-            (m3u_from_str and m3u_to_str)):
-            if not m3u_input_dir:
-                print('Specify --m3u_input_dir...')
-                return
-            playlist_manager = PlaylistManager(input_dir=m3u_input_dir,
-                                               output_dir=m3u_output_dir)
-            start = time.process_time()
-            playlist_manager.read()
-            if m3u_flac_to_alac:
-                playlist_manager.convert_flac_to_alac()
-                print_if(f'flac->alac, elapsed: {time.process_time() - start}')
-            if m3u_windows_to_posix:
-                playlist_manager.convert_windows_to_posix()
-                print_if('windows->posix, elapsed: '
-                         f'{time.process_time() - start}')
-            if m3u_from_str and m3u_to_str:
-                playlist_manager.convert_from_str_to_str(from_str=m3u_from_str,
-                                                         to_str=m3u_to_str)
-                print_if(f'{m3u_from_str}->{m3u_to_str}, elapsed: '
-                         f'{time.process_time() - start}')
-
-            playlist_manager.write()
-            print_if('Finished writing, elapsed: '
-                     f'{time.process_time() - start}')
-
-        if flac_dir:
-            if not FFMPEG_AVAILABLE and not XLD_AVAILABLE:
-                print('Install ffmpeg or xld to use --flac_dir.')
-                return
-
-            converter = FlacToAlacConverter(
-                input_dir=flac_dir,
-                overwrite_output=flac_overwrite_output,
-                delete_original=flac_delete_original,
-                num_threads=int(flac_threads))
-            converter.read()
-            converter.write()
-
-    except KeyboardInterrupt:
-        if converter:
-            converter.thread_kill_event.set()
-            print("Done...")
+    if args.jojo:
+        music_manager = JojoMusicManager(args)
+        music_manager.run()
+    else:
+        music_manager = MusicManager(args)
+        music_manager.run()
 
 if __name__ == '__main__':
     main()
