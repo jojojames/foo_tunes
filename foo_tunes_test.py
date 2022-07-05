@@ -117,6 +117,7 @@ class PlaylistManagerTest(unittest.TestCase):
             'FLAC',
             'Library',
             'LOSSLESS',
+            'LOSSY',
             'TODO_',
             'TO_PROCESS',
             'i_1',
@@ -128,64 +129,69 @@ class PlaylistManagerTest(unittest.TestCase):
                             deny_list=deny_list)
 
         deny_playlists = [
-            '/Volumes/bebe/playlists/windows/ALAC.m3u8'
-            '/Volumes/bebe/playlists/windows/Auto - Most Played.m3u8'
-            '/Volumes/bebe/playlists/windows/Auto - Replay Gain Missing.m3u8'
-            '/Volumes/bebe/playlists/windows/Filter Results.m3u8'
-            '/Volumes/bebe/playlists/windows/Filter Results (Playback).m3u8'
-            '/Volumes/bebe/playlists/windows/FLAC.m3u8'
-            '/Volumes/bebe/playlists/windows/i_1.m3u8'
-            '/Volumes/bebe/playlists/windows/i_2.m3u8'
-            '/Volumes/bebe/playlists/windows/Library.m3u8'
-            '/Volumes/bebe/playlists/windows/Library Viewer Selection.m3u8'
-            '/Volumes/bebe/playlists/windows/LOSSLESS.m3u8'
-            '/Volumes/bebe/playlists/windows/LOSSY.m3u8'
-            '/Volumes/bebe/playlists/windows/TODO_J.m3u8'
+            '/Volumes/bebe/playlists/windows/_TO_PROCESS.m3u8',
+            '/Volumes/bebe/playlists/windows/ALAC.m3u8',
+            '/Volumes/bebe/playlists/windows/Auto - Most Played.m3u8',
+            '/Volumes/bebe/playlists/windows/Auto - Replay Gain Missing.m3u8',
+            '/Volumes/bebe/playlists/windows/Filter Results.m3u8',
+            '/Volumes/bebe/playlists/windows/Filter Results (Playback).m3u8',
+            '/Volumes/bebe/playlists/windows/FLAC.m3u8',
+            '/Volumes/bebe/playlists/windows/i_1.m3u8',
+            '/Volumes/bebe/playlists/windows/i_2.m3u8',
+            '/Volumes/bebe/playlists/windows/Library.m3u8',
+            '/Volumes/bebe/playlists/windows/Library Viewer Selection.m3u8',
+            '/Volumes/bebe/playlists/windows/LOSSLESS.m3u8',
+            '/Volumes/bebe/playlists/windows/LOSSY.m3u8',
+            '/Volumes/bebe/playlists/windows/TODO_J.m3u8',
             '/Volumes/bebe/playlists/windows/TODO_Indie.m3u8'
         ]
 
         for deny in deny_playlists:
-            self.assertFalse(p.should_manage_playlist(Playlist(file=deny)))
+            playlist: Playlist = Playlist(file=deny)
+            self.assertFalse(p.should_manage_playlist(playlist=playlist),
+                             msg=playlist.file)
 
         accept_playlists = [
-            '/Volumes/bebe/playlists/windows/2009 - 2011.m3u8'
-            '/Volumes/bebe/playlists/windows/2012 - 2013.m3u8'
-            '/Volumes/bebe/playlists/windows/2014 - 2019.m3u8'
-            '/Volumes/bebe/playlists/windows/2020 - 2021.m3u8'
-            '/Volumes/bebe/playlists/windows/Acid Jazz.m3u8'
-            '/Volumes/bebe/playlists/windows/COALS.m3u8'
-            '/Volumes/bebe/playlists/windows/Concentratre.m3u8'
-            '/Volumes/bebe/playlists/windows/C-Pop.m3u8'
-            '/Volumes/bebe/playlists/windows/Dance.m3u8'
-            '/Volumes/bebe/playlists/windows/EDM.m3u8'
-            '/Volumes/bebe/playlists/windows/Folk.m3u8'
-            '/Volumes/bebe/playlists/windows/Genki Playlist.m3u8'
-            '/Volumes/bebe/playlists/windows/Hip Hop.m3u8'
-            '/Volumes/bebe/playlists/windows/Indie.m3u8'
-            '/Volumes/bebe/playlists/windows/JAZZ.m3u8'
-            '/Volumes/bebe/playlists/windows/J-Pop.m3u8'
-            '/Volumes/bebe/playlists/windows/KOSTS.m3u8'
-            '/Volumes/bebe/playlists/windows/K-Pop.m3u8'
-            '/Volumes/bebe/playlists/windows/Listening Practice.m3u8'
-            '/Volumes/bebe/playlists/windows/Mellow.m3u8'
-            '/Volumes/bebe/playlists/windows/No Voice.m3u8'
-            '/Volumes/bebe/playlists/windows/POP.m3u8'
-            '/Volumes/bebe/playlists/windows/PUBG.m3u8'
-            '/Volumes/bebe/playlists/windows/Punk & SKA.m3u8'
-            '/Volumes/bebe/playlists/windows/RANDOM.m3u8'
-            '/Volumes/bebe/playlists/windows/RnB.m3u8'
-            '/Volumes/bebe/playlists/windows/Rock.m3u8'
-            '/Volumes/bebe/playlists/windows/Setlist - GFRIEND Yokohama JP 11-17-2019.m3u8'
-            '/Volumes/bebe/playlists/windows/Setlist - TWICE LA 7-17-2019.m3u8'
-            '/Volumes/bebe/playlists/windows/Setlist - TWICE Miyagi JP 11-16-2019.m3u8'
-            '/Volumes/bebe/playlists/windows/Soul.m3u8'
-            '/Volumes/bebe/playlists/windows/Upbeat Uplifting.m3u8'
-            '/Volumes/bebe/playlists/windows/Voice.m3u8'
+            '/Volumes/bebe/playlists/windows/2009 - 2011.m3u8',
+            '/Volumes/bebe/playlists/windows/2012 - 2013.m3u8',
+            '/Volumes/bebe/playlists/windows/2014 - 2019.m3u8',
+            '/Volumes/bebe/playlists/windows/2020 - 2021.m3u8',
+            '/Volumes/bebe/playlists/windows/Acid Jazz.m3u8',
+            '/Volumes/bebe/playlists/windows/COALS.m3u8',
+            '/Volumes/bebe/playlists/windows/Concentratre.m3u8',
+            '/Volumes/bebe/playlists/windows/C-Pop.m3u8',
+            '/Volumes/bebe/playlists/windows/Dance.m3u8',
+            '/Volumes/bebe/playlists/windows/EDM.m3u8',
+            '/Volumes/bebe/playlists/windows/Folk.m3u8',
+            '/Volumes/bebe/playlists/windows/Genki Playlist.m3u8',
+            '/Volumes/bebe/playlists/windows/Hip Hop.m3u8',
+            '/Volumes/bebe/playlists/windows/Indie.m3u8',
+            '/Volumes/bebe/playlists/windows/JAZZ.m3u8',
+            '/Volumes/bebe/playlists/windows/J-Pop.m3u8',
+            '/Volumes/bebe/playlists/windows/KOSTS.m3u8',
+            '/Volumes/bebe/playlists/windows/K-Pop.m3u8',
+            '/Volumes/bebe/playlists/windows/Listening Practice.m3u8',
+            '/Volumes/bebe/playlists/windows/Mellow.m3u8',
+            '/Volumes/bebe/playlists/windows/No Voice.m3u8',
+            '/Volumes/bebe/playlists/windows/POP.m3u8',
+            '/Volumes/bebe/playlists/windows/PUBG.m3u8',
+            '/Volumes/bebe/playlists/windows/Punk & SKA.m3u8',
+            '/Volumes/bebe/playlists/windows/RANDOM.m3u8',
+            '/Volumes/bebe/playlists/windows/RnB.m3u8',
+            '/Volumes/bebe/playlists/windows/Rock.m3u8',
+            '/Volumes/bebe/playlists/windows/Setlist - GFRIEND Yokohama JP 11-17-2019.m3u8',
+            '/Volumes/bebe/playlists/windows/Setlist - TWICE LA 7-17-2019.m3u8',
+            '/Volumes/bebe/playlists/windows/Setlist - TWICE Miyagi JP 11-16-2019.m3u8',
+            '/Volumes/bebe/playlists/windows/Soul.m3u8',
+            '/Volumes/bebe/playlists/windows/Upbeat Uplifting.m3u8',
+            '/Volumes/bebe/playlists/windows/Voice.m3u8',
             '/Volumes/bebe/playlists/windows/_Zero.m3u8'
         ]
 
         for accept in accept_playlists:
-            self.assertTrue(p.should_manage_playlist(Playlist(file=accept)))
+            playlist: Playlist = Playlist(file=accept)
+            self.assertTrue(p.should_manage_playlist(playlist),
+                            msg=playlist.file)
 
 
 class ResilioTest(unittest.TestCase):

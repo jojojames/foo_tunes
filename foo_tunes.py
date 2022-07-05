@@ -247,6 +247,7 @@ class PlaylistManager:
         'FLAC',
         'Library',
         'LOSSLESS',
+        'LOSSY',
         'TODO',
         'TO_PROCESS'
         'i_1',
