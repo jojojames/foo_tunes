@@ -238,10 +238,34 @@ class Playlist:
 
 class PlaylistManager:
     """Class that manages reading and writing Playlists."""
-    def __init__(self, input_dir: str, output_dir: str):
+
+    DEFAULT_DENY_LIST = [
+        'ALAC',
+        'Filter Results',
+        'FLAC',
+        'Library',
+        'LOSSLESS',
+        'TODO_',
+        'Auto -',
+        'i_1',
+        'i_2',
+    ]
+
+    def __init__(self,
+                 input_dir: str,
+                 output_dir: str,
+                 deny_list: List[str] = DEFAULT_DENY_LIST):
         self.input_dir = true_path(input_dir)
         self.output_dir = true_path(output_dir)
         self.playlists: List[Playlist] = []
+        self.deny_list = deny_list
+
+    def should_manage_playlist(self, playlist: Playlist):
+        for deny in self.deny_list:
+            deny_pattern = re.compile(deny)
+            if re.search(deny_pattern, playlist.file):
+                return False
+        return True
 
     def read(self):
         playlist_glob = os.path.join(self.input_dir, '*.m3u8')
@@ -250,8 +274,11 @@ class PlaylistManager:
         playlist_files = glob.glob(playlist_glob)
         for playlist_file in playlist_files:
             playlist: Playlist = Playlist(playlist_file)
-            playlist.read()
-            self.playlists.append(playlist)
+            if self.should_manage_playlist(playlist):
+                playlist.read()
+                self.playlists.append(playlist)
+            else:
+                print_if(f'Skipped reading playlist: {playlist.file}...')
 
         print_if(f'Playlist Files: {playlist_files}')
 
