@@ -11,11 +11,6 @@ from watchdog.observers import Observer
 from watchdog.events import FileSystemEventHandler
 
 
-### Constants
-
-CONVERT_PLAYLIST_DELAY = 30
-CONVERT_FLAC_DELAY = 120
-
 parser = argparse.ArgumentParser(description='Foobar2000 -> iTunes utilities')
 
 ### Playlist / .m3u8 Management
@@ -88,12 +83,12 @@ parser.add_argument(
     help='Number of seconds to sleep for when watching directory changes.')
 
 parser.add_argument(
-    '--watch_playlist_delay', default=CONVERT_PLAYLIST_DELAY, type=int,
+    '--watch_playlist_delay', default=20, type=int,
     help='Number of seconds to wait before managing playlists upon directory'
     ' changes.')
 
 parser.add_argument(
-    '--watch_convert_delay', default=CONVERT_FLAC_DELAY, type=int,
+    '--watch_convert_delay', default=120, type=int,
     help='Number of seconds to wait before converting flacs upon directory'
     ' changes.')
 
