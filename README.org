@@ -1,6 +1,35 @@
 * Dependencies
+** Watching
+Install watchdog for directory watching.
+
 #+begin_src sh :tangle yes
 pip install watchdog
+#+end_src
+** Converting
+~ffmpeg~ or ~xld~ (OSX Only) is needed to convert FLACs to ALACs.
+#+begin_src sh :tangle yes
+brew install xld # OSX
+
+brew install ffmpeg # OSX
+pkg install ffmpeg # FreeBSD
+#+end_src
+** Tagging
+~ffmpeg~ (for ALACs and MP3s) or ~mp4tags~ (for ALACs)
+
+#+begin_src sh :tangle yes
+brew install ffmpeg # OSX
+pkg install ffmpeg # FreeBSD
+
+brew install mp4v2  # OSX
+pkg install mp4v2 # FreeBSD
+#+end_src
+
+~metaflac~ is needed for FLACs.
+
+#+begin_src sh :tangle yes
+brew install flac # OSX
+
+pkg install flac # FreeBSD
 #+end_src
 * Managing Playlists / m3u8 files
 ** Convert .flac extensions to m4a
