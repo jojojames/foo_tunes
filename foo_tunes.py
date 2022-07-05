@@ -165,7 +165,7 @@ def walk_files(directory: str) -> List[str]:
 def find_all_music_files(directory: str) -> List[str]:
     files = walk_files(directory=directory)
 
-    music_pattern = re.compile('(\.flac$|\.mp3|\.m4a)', re.IGNORECASE)
+    music_pattern = re.compile('(\.flac$|\.mp3$|\.m4a$)', re.IGNORECASE)
     music_files = []
     for f in files:
         if re.search(music_pattern, f):
