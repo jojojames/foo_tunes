@@ -29,13 +29,13 @@ parser.add_argument(
 parser.add_argument(
     '--m3u_flac_to_alac',
     default=False,
-    action="store_true",
+    action='store_true',
     help='Change .flac extension to .m4a in playlists.')
 
 parser.add_argument(
     '--m3u_windows_to_posix',
     default=False,
-    action="store_true",
+    action='store_true',
     help='Convert music paths in playlist to posix format.')
 
 parser.add_argument('--m3u_from_str',
@@ -47,7 +47,7 @@ parser.add_argument('--m3u_to_str',
 parser.add_argument(
     '--m3u_watch',
     default=False,
-    action="store_true",
+    action='store_true',
     help='If set, watch input directory for playlist changes and automatically '
     'convert playlists in that directory using the related -m3u flags.')
 
@@ -56,11 +56,11 @@ parser.add_argument(
 parser.add_argument('--flac_dir',
                     help='If set, convert .flac files in this directory to .m4a.')
 
-parser.add_argument('--flac_overwrite_output', default=False, action="store_true",
+parser.add_argument('--flac_overwrite_output', default=False, action='store_true',
                     help='If set, always write/overwrite output files'
                     ' when converting.')
 
-parser.add_argument('--flac_delete_original', default=False, action="store_true",
+parser.add_argument('--flac_delete_original', default=False, action='store_true',
                     help='If set, delete .flac version after converting to alac.')
 
 parser.add_argument('--flac_threads', default=4, type=int,
@@ -69,11 +69,11 @@ parser.add_argument('--flac_threads', default=4, type=int,
 parser.add_argument(
     '--flac_watch',
     default=False,
-    action="store_true",
+    action='store_true',
     help='If set, watch input directory for flac changes and automatically '
     'convert flacs in that directory using the related -flac flags.')
 
-parser.add_argument('--change_genres', default=False, action="store_true",
+parser.add_argument('--change_genres', default=False, action='store_true',
                     help='If set, tweak genre tags to a common set of tags.')
 
 ### Watching for Changes
@@ -98,13 +98,13 @@ parser.add_argument('--clean_up',
                     help='If set, clean up this directory of extraneous files.'
                     'This is of the form --clean_up=/some/directory')
 
-parser.add_argument('--dry', default=False, action="store_true",
-                    help="If set, don't write any new changes.")
+parser.add_argument('--dry', default=False, action='store_true',
+                    help='If set, don\'t write any new changes.')
 
-parser.add_argument('--jojo', default=False, action="store_true",
+parser.add_argument('--jojo', default=False, action='store_true',
                     help='If set, manage music.')
 
-parser.add_argument('-v', '--verbose', default=False, action="store_true",
+parser.add_argument('-v', '--verbose', default=False, action='store_true',
                     help='Verbose logging.')
 
 
@@ -233,7 +233,7 @@ class Playlist:
         if not DRY:
             with open(playlist_path, 'w', encoding='utf8') as f:
                 for each in self.songs:
-                    f.write(each + "\n")
+                    f.write(each + '\n')
 
         print_if(f'Wrote {playlist_path}')
 
@@ -322,7 +322,7 @@ class Resilio:
         """Returns whether or not Resilio is currently syncing."""
         files = os.listdir(self.get_temp_directory())
 
-        sync_pattern = re.compile("\!\.sync$")
+        sync_pattern = re.compile('\!\.sync$')
         for file in files:
             print_if(f'Looking for sync pattern in {file}...')
             if re.search(sync_pattern, file):
@@ -453,7 +453,7 @@ class FFProbe():
     def get_genre_tag(self) -> Optional[str]:
         """Returns the tag name for Genre used in this input file."""
         if (tags := self.get_tags()) is not None:
-            possible_genre_tags = ["Genre", "GENRE", "genre"]
+            possible_genre_tags = ['Genre', 'GENRE', 'genre']
             for genre_tag in possible_genre_tags:
                 if genre_tag in tags:
                     return genre_tag
@@ -465,15 +465,15 @@ class FFProbe():
         if not self.result:
             return None
 
-        if "format" not in self.result:
+        if 'format' not in self.result:
             return None
 
-        format = self.result["format"]
+        format = self.result['format']
 
-        if "tags" not in format:
+        if 'tags' not in format:
             return None
 
-        tags = format["tags"]
+        tags = format['tags']
         return tags
 
     def read(self):
@@ -809,7 +809,7 @@ class JojoMusicManager:
             if self.converter:
                 self.converter.thread_kill_event.set()
 
-            print("Done...")
+            print('Done...')
         except Exception:
             print('Exception while converting music...')
             traceback.print_exc()
@@ -835,7 +835,7 @@ class JojoMusicManager:
                 move(from_dir, to_dir)
                 print_if(f'Moved {from_dir} to {to_dir}...')
         except KeyboardInterrupt:
-            print("Done...")
+            print('Done...')
         except Exception:
             print('Exception while moving music...')
             traceback.print_exc()
@@ -869,7 +869,7 @@ class JojoMusicManager:
         try:
             while True:
                 now = datetime.now()
-                current_time = now.strftime("%H:%M:%S")
+                current_time = now.strftime('%H:%M:%S')
                 print_if(f'Time: {current_time}.. Observing changes...')
                 time.sleep(self.args.watch_sleep_time)
         except KeyboardInterrupt:
@@ -980,7 +980,7 @@ class MusicManager:
             if genre_changer:
                 genre_changer.thread_kill_event.set()
 
-            print("Done...")
+            print('Done...')
 
     def watch(self):
         self.observers: List[Observer] = []
@@ -1017,7 +1017,7 @@ class MusicManager:
         try:
             while True:
                 now = datetime.now()
-                current_time = now.strftime("%H:%M:%S")
+                current_time = now.strftime('%H:%M:%S')
                 print_if(f'Time: {current_time}.. Observing changes...')
                 time.sleep(self.args.watch_sleep_time)
         except KeyboardInterrupt:
