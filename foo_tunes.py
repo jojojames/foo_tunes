@@ -125,8 +125,13 @@ def flac_extension_to_alac(song: str) -> str:
 def windows_path_to_posix(song: str) -> str:
     return str(PureWindowsPath(song).as_posix())
 
-def get_playlist_write_path(m3u_output_dir: str, file: str) -> Path:
+def get_playlist_write_path(m3u_output_dir: str,
+                            file: str,
+                            prefix: Optional[str] = None) -> Path:
     base_name = os.path.basename(file)
+    if prefix:
+        base_name = prefix + base_name
+
     if m3u_output_dir:
         playlist_path = os.path.normpath(os.path.join(m3u_output_dir, base_name))
     else:
@@ -215,12 +220,13 @@ class Playlist:
                 if line.strip():
                     self.songs.append(line.strip())
 
-    def write(self, output_dir=None):
+    def write(self, output_dir=None, prefix: Optional[str] = None):
         if not self.songs:
             self.read()
 
         playlist_path = get_playlist_write_path(m3u_output_dir=output_dir,
-                                                file=self.file)
+                                                file=self.file,
+                                                prefix=prefix)
         playlist_path.parent.mkdir(exist_ok=True, parents=True)
 
         if not DRY:
@@ -278,9 +284,9 @@ class PlaylistManager:
 
         print_if(f'Playlist Files: {playlist_files}')
 
-    def write(self):
+    def write(self, prefix: Optional[str] = None):
         for playlist in self.playlists:
-            playlist.write(self.output_dir)
+            playlist.write(self.output_dir, prefix=prefix)
 
     def convert_flac_to_alac(self):
         print_if('Converting m3u playlist extensions from .flac to .alac.')
@@ -759,7 +765,9 @@ class JojoMusicManager:
         print_if(f'X:/music->/Users/james/Music, elapsed: '
                  f'{time.process_time() - start}')
 
-        self.playlist_manager.write()
+        # Apple Music has random playlists loaded from Music Library.
+        # Prefix the playlist with _ to get it sorted to the top.
+        self.playlist_manager.write(prefix='_')
 
         # Write the FreeBSD version deriving from the current list of playlists.
         self.playlist_manager.output_dir = self.get_bsd_m3u_directory()

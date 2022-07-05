@@ -51,6 +51,9 @@ class FooTunesTest(unittest.TestCase):
         self.assertEqual(
             foo_tunes.get_playlist_write_path(None, '~/file.m3u'),
             Path('~/file.m3u'))
+        self.assertEqual(
+            foo_tunes.get_playlist_write_path('/a/b/c', '~/file.m3u', '_'),
+            Path('/a/b/c/_file.m3u'))
 
     def test_from_str_to_str(self):
         self.assertEqual(
