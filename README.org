@@ -1,3 +1,20 @@
+#+TITLE: Foo Tunes
+#+STARTUP: noindent
+
+~Foo Tunes~ is a tool that provides a collection of functionality for use
+between Foobar2000 and iTunes.
+
+Functionality listed below:
+
+- Converting Foobar2000 exported (.m3u/.m3u8) playlist contents to be readable
+by iTunes.
+
+- Convert a directory of FLACs to ALACs.
+
+- Tweak metadata Genre to a common set of Genres.
+
+- Watch a specific directory for changes and automatically ^run above.
+
 * Dependencies
 ** Watching
 Install watchdog for directory watching.
