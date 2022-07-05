@@ -1,11 +1,20 @@
 #!/usr/bin/python3
 
-import argparse, glob, json, logging, os, platform, queue, re, subprocess, \
-    threading, time, traceback
+import argparse
+import json
+import glob
+import platform
+import queue
+import re
+import subprocess
+import threading
+import time
+import traceback
+import os
 
 from datetime import datetime
 from functools import partial
-from pathlib import Path, PurePosixPath, PureWindowsPath
+from pathlib import Path, PureWindowsPath
 from shutil import move, rmtree, which
 from typing import Any, Dict, List, Optional, Text
 from watchdog.observers import Observer
@@ -14,7 +23,7 @@ from watchdog.events import FileSystemEventHandler
 
 parser = argparse.ArgumentParser(description='Foobar2000 -> iTunes utilities')
 
-### Playlist / .m3u8 Management
+# Playlist / .m3u8 Management
 
 parser.add_argument(
     '-m3u_i',
@@ -49,20 +58,23 @@ parser.add_argument(
     '--m3u_watch',
     default=False,
     action='store_true',
-    help='If set, watch input directory for playlist changes and automatically '
-    'convert playlists in that directory using the related -m3u flags.')
+    help='If set, watch input directory for playlist changes and automatically'
+    ' convert playlists in that directory using the related -m3u flags.')
 
-### FLAC Conversion
+# FLAC Conversion
 
-parser.add_argument('--flac_dir',
-                    help='If set, convert .flac files in this directory to .m4a.')
+parser.add_argument(
+    '--flac_dir',
+    help='If set, convert .flac files in this directory to .m4a.')
 
-parser.add_argument('--flac_overwrite_output', default=False, action='store_true',
-                    help='If set, always write/overwrite output files'
-                    ' when converting.')
+parser.add_argument(
+    '--flac_overwrite_output', default=False, action='store_true',
+    help='If set, always write/overwrite output files'
+    ' when converting.')
 
-parser.add_argument('--flac_delete_original', default=False, action='store_true',
-                    help='If set, delete .flac version after converting to alac.')
+parser.add_argument(
+    '--flac_delete_original', default=False, action='store_true',
+    help='If set, delete .flac version after converting to alac.')
 
 parser.add_argument('--flac_threads', default=4, type=int,
                     help='Number of threads to use when converting.')
@@ -77,7 +89,7 @@ parser.add_argument(
 parser.add_argument('--change_genres', default=False, action='store_true',
                     help='If set, tweak genre tags to a common set of tags.')
 
-### Watching for Changes
+# Watching for Changes
 
 parser.add_argument(
     '--watch_sleep_time', default=30, type=int,
@@ -93,7 +105,7 @@ parser.add_argument(
     help='Number of seconds to wait before converting flacs upon directory'
     ' changes.')
 
-### Utility
+# Utility
 
 parser.add_argument('--clean_up',
                     help='If set, clean up this directory of extraneous files.'
@@ -114,18 +126,22 @@ def print_if(str: str) -> None:
     if VERBOSE or DRY:
         print(str)
 
+
 def true_path(path: str) -> Optional[str]:
     # https://stackoverflow.com/questions/37863476/why-would-one-use-both-os-path-abspath-and-os-path-realpath
     if path is None:
         return None
     return os.path.realpath(os.path.expanduser(path))
 
+
 def flac_extension_to_alac(song: str) -> str:
     pattern = re.compile('\.flac', re.IGNORECASE)
     return pattern.sub('.m4a', song)
 
+
 def windows_path_to_posix(song: str) -> str:
     return str(PureWindowsPath(song).as_posix())
+
 
 def get_playlist_write_path(m3u_output_dir: str,
                             file: str,
@@ -141,14 +157,17 @@ def get_playlist_write_path(m3u_output_dir: str,
                                                       base_name))
     return Path(playlist_path)
 
+
 def from_str_to_str(song: str, from_str: str, to_str: str) -> str:
     return song.replace(from_str, to_str)
+
 
 def alac_path_from_flac_path(flac_path: str) -> Text:
     directory, file_name = os.path.split(flac_path)
     base_name, extension = os.path.splitext(file_name)
     alac_path = os.path.join(directory, base_name + '.m4a')
     return alac_path
+
 
 def temp_path_from_path(path: str) -> Text:
     """Returns a filepath that mirrors path but with _temp suffixed to it."""
@@ -157,11 +176,13 @@ def temp_path_from_path(path: str) -> Text:
     new_path = os.path.join(directory, base_name + '_temp' + extension)
     return new_path
 
+
 def walk_files(directory: str) -> List[str]:
     # https://stackoverflow.com/questions/19309667/recursive-os-listdir
     return [os.path.join(dp, f)
                  for dp, dn, fn in os.walk(os.path.expanduser(directory))
                  for f in fn]
+
 
 def find_all_music_files(directory: str) -> List[str]:
     files = walk_files(directory=directory)
@@ -174,6 +195,7 @@ def find_all_music_files(directory: str) -> List[str]:
 
     print_if(f'Found music files: {music_files}')
     return music_files
+
 
 def delete_some_trash(directory: str) -> None:
     """Delete extraneous trash files that may corrupt entire process."""
@@ -190,17 +212,21 @@ def delete_some_trash(directory: str) -> None:
             print_if(f'Deleting trash {f}...')
             os.remove(f)
 
+
 def delete_directory_if_exists(directory: str) -> None:
     if os.path.exists(directory):
         print_if(f'Deleting directory {directory}...')
         rmtree(directory)
 
+
 def print_separator() -> None:
     if VERBOSE:
         print('---------------------------------------------------------------')
 
+
 def print_json(obj) -> None:
     print(json.dumps(obj, indent=2))
+
 
 def print_process_output(process, prefix: str) -> None:
     if not process:
@@ -210,6 +236,7 @@ def print_process_output(process, prefix: str) -> None:
         print_if(f'{prefix}: stdout: {process.stdout}')
     if process.stderr and process.stderr.strip():
         print_if(f'{prefix}: stderr: {process.stderr}')
+
 
 class Playlist:
     """Class representing an m3u playlist."""
@@ -446,15 +473,22 @@ class FlacToAlacConverter:
         for thread in self.threads:
             thread.join()
 
+
 class FFProbe():
     def __init__(self, input_file: str):
         self.input_file = true_path(input_file)
 
     def get_genre(self) -> Optional[str]:
         """Returns the metadata field Genre in this input file."""
-        if ((tags := self.get_tags()) and (genre_tag := self.get_genre_tag())) is not None:
-            return tags[genre_tag]
-        return None
+        tags = self.get_tags()
+        if not tags:
+            return None
+
+        genre_tag = self.get_genre_tag()
+        if not genre_tag:
+            return None
+
+        return tags[genre_tag]
 
     def get_genre_tag(self) -> Optional[str]:
         """Returns the tag name for Genre used in this input file."""
