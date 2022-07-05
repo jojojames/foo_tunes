@@ -120,7 +120,8 @@ def true_path(path: str) -> Optional[str]:
     return os.path.realpath(os.path.expanduser(path))
 
 def flac_extension_to_alac(song: str) -> str:
-    return song.replace(".flac", ".m4a").replace(".Flac", ".m4a")
+    pattern = re.compile('\.flac', re.IGNORECASE)
+    return pattern.sub('.m4a', song)
 
 def windows_path_to_posix(song: str) -> str:
     return str(PureWindowsPath(song).as_posix())
@@ -164,7 +165,7 @@ def walk_files(directory: str) -> List[str]:
 def find_all_music_files(directory: str) -> List[str]:
     files = walk_files(directory=directory)
 
-    music_pattern = re.compile('(\.flac$|\.Flac$|\.mp3|\.m4a)')
+    music_pattern = re.compile('(\.flac$|\.mp3|\.m4a)', re.IGNORECASE)
     music_files = []
     for f in files:
         if re.search(music_pattern, f):
@@ -354,11 +355,10 @@ class FlacToAlacConverter:
 
         files = walk_files(self.input_dir)
 
-        flac_pattern = re.compile("\.flac$")
-        Flac_pattern = re.compile("\.Flac$")
+        flac_pattern = re.compile('\.flac$', re.IGNORECASE)
         flac_files = []
         for f in files:
-            if re.search(flac_pattern, f) or re.search(Flac_pattern, f):
+            if re.search(flac_pattern, f):
                 flac_files.append(f)
 
         print_separator()
@@ -618,7 +618,7 @@ class GenreChanger():
                     move(temp_path, music_file)
                     print_process_output(process, 'ffmpeg tag')
 
-            if extension == '.flac' or extension == '.Flac':
+            if extension == '.flac':
                 if not METAFLAC_AVAILABLE:
                     print('metaflac unavailable for tagging flac files.')
                     continue

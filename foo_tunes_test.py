@@ -26,6 +26,10 @@ class FooTunesTest(unittest.TestCase):
             foo_tunes.flac_extension_to_alac(
                 r'X:\music\K-Pop\TWICE\#TWICE\08 TT.Flac'),
             r'X:\music\K-Pop\TWICE\#TWICE\08 TT.m4a')
+        self.assertEqual(
+            foo_tunes.flac_extension_to_alac(
+                r'X:\music\K-Pop\TWICE\#TWICE\08 TT.FLAC'),
+            r'X:\music\K-Pop\TWICE\#TWICE\08 TT.m4a')
 
     def test_windows_path_to_posix(self):
         self.assertEqual(
