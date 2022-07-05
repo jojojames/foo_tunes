@@ -1,5 +1,6 @@
-import json, os
 import foo_tunes
+import json
+import os
 import unittest
 
 from pathlib import Path
@@ -101,7 +102,7 @@ class FooTunesTest(unittest.TestCase):
         self.assertEqual(len(os.listdir(flac_dir)), 1)
 
         ds_store_file = os.path.join(flac_dir, r'.DS_Store')
-        with open(trash_file, 'w') as f:
+        with open(ds_store_file, 'w') as f:
             f.write('Create a new text file!')
 
         self.assertEqual(len(os.listdir(flac_dir)), 2)
