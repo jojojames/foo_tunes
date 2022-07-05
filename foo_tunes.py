@@ -570,6 +570,7 @@ class GenreChanger():
 
             directory, file_name = os.path.split(music_file)
             base_name, extension = os.path.splitext(file_name)
+            extension = extension.lower()
             print_if(f'Tagging file: {file_name}')
 
             if extension == '.m4a' or extension == '.mp3':
