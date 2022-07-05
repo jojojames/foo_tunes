@@ -135,7 +135,7 @@ def true_path(path: str) -> Optional[str]:
 
 
 def flac_extension_to_alac(song: str) -> str:
-    pattern = re.compile('\.flac', re.IGNORECASE)
+    pattern = re.compile(r'.flac', re.IGNORECASE)
     return pattern.sub('.m4a', song)
 
 
@@ -188,7 +188,7 @@ def walk_files(directory: str) -> List[str]:
 def find_all_music_files(directory: str) -> List[str]:
     files = walk_files(directory=directory)
 
-    music_pattern = re.compile('(\.flac$|\.mp3$|\.m4a$)', re.IGNORECASE)
+    music_pattern = re.compile(r'(.flac$|.mp3$|.m4a$)', re.IGNORECASE)
     music_files = []
     for f in files:
         if re.search(music_pattern, f):

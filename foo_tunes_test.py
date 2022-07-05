@@ -1,6 +1,7 @@
 import foo_tunes
 import json
 import os
+import shutil
 import unittest
 
 from pathlib import Path
@@ -78,6 +79,27 @@ class FooTunesTest(unittest.TestCase):
         self.assertEqual(
             foo_tunes.temp_path_from_path('/a/b/c/abc.mp3'),
             '/a/b/c/abc_temp.mp3')
+
+    def test_find_all_music_files(self):
+        temp_dir = os.path.join(os.path.dirname(__file__), 'testdata/temp_dir')
+        os.mkdir(temp_dir)
+
+        files = [
+            os.path.join(temp_dir, 'a.mp3'),
+            os.path.join(temp_dir, 'a.flac'),
+            os.path.join(temp_dir, 'a.m4a'),
+            os.path.join(temp_dir, 'a.not')
+        ]
+
+        for file in files:
+            with open(file, 'w') as f:
+                f.write('Create a new text file!')
+
+        # Find three files even though files is a list of four.
+        self.assertEqual(len(foo_tunes.find_all_music_files(temp_dir)), 3)
+
+        # Clean up test directory.
+        shutil.rmtree(temp_dir)
 
     def test_delete_some_trash(self):
         flac_dir = os.path.join(os.path.dirname(__file__), 'testdata/flac_dir')
