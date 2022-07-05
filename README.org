@@ -85,43 +85,6 @@ Windows to OSX, etc.
 #+begin_src sh :tangle yes
 --m3u_watch
 #+end_src
-* Convert Flac to Alac
-#+begin_src sh :tangle yes
-./foo_tunes.py --flac_dir=~/some-dir-with-flac-files --verbose
-#+end_src
-** Options:
-#+begin_src sh :tangle yes
---flac_dir # Default = None
---flac_overwrite_output # Default = False
---flac_delete_original # Default = False
---flac_convert_threads # Default = 4
---flac_watch
---change_genres
-#+end_src
-
-** Watching directory for changes
-#+begin_src sh :tangle yes
---flac_watch
-#+end_src
-* Recipes
-** Write to output dir
-#+begin_src sh :tangle yes
-  python foo_tunes.py -i=/Volumes/drive/playlists/windows --verbose -o=temp  --flac_ext_to_alac
-#+end_src
-
-#+begin_src sh :tangle yes
-  ./foo_tunes.py -i=/Volumes/bebe/playlists/windows --verbose -o=temp2  --flac_ext_to_alac
-#+end_src
-
-** To overwrite files
-#+begin_src sh :tangle yes
-  ./foo_tunes.py -i=/Volumes/bebe/playlists/windows --verbose  --flac_ext_to_alac
-#+end_src
-
-** Change some text in every line
-#+begin_src sh :tangle yes
-  ./foo_tunes.py -i=/Volumes/bebe/playlists/windows/ --from_str='X:\music' --to_str='Y:\music'
-#+end_src
 ** Using most flags
 #+begin_src sh :tangle yes
 python foo_tunes.py \
@@ -141,6 +104,42 @@ python foo_tunes.py \
   to:
 
  /Users/james/Music/J-Pop/Utada Hikaru/Distance/01 Wait & See.mp3
+#+end_src
+* Convert Flac to Alac
+#+begin_src sh :tangle yes
+./foo_tunes.py --flac_dir=~/some-dir-with-flac-files --verbose
+#+end_src
+** Options:
+#+begin_src sh :tangle yes
+--flac_dir # Default = None
+--flac_overwrite_output # Default = False
+--flac_delete_original # Default = False
+--flac_convert_threads # Default = 4
+--flac_watch
+--change_genres
+#+end_src
+
+** Watching directory for changes
+#+begin_src sh :tangle yes
+--flac_watch
+#+end_src
+* Other Examples
+** Write to specific output dir
+#+begin_src sh :tangle yes
+  python foo_tunes.py -i=/Volumes/drive/playlists/windows --verbose -o=temp  --flac_ext_to_alac
+#+end_src
+
+#+begin_src sh :tangle yes
+  ./foo_tunes.py -i=/Volumes/bebe/playlists/windows --verbose -o=temp2  --flac_ext_to_alac
+#+end_src
+
+** Overwrite original m3u playlists
+#+begin_src sh :tangle yes
+  ./foo_tunes.py -i=/Volumes/bebe/playlists/windows --verbose  --flac_ext_to_alac
+#+end_src
+** Change some text in every line
+#+begin_src sh :tangle yes
+  ./foo_tunes.py -i=/Volumes/bebe/playlists/windows/ --from_str='X:\music' --to_str='Y:\music'
 #+end_src
 
 * Test
