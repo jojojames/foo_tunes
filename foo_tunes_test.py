@@ -109,12 +109,13 @@ class PlaylistManagerTest(unittest.TestCase):
     def test_should_manage_playlist(self):
         deny_list = [
             'ALAC',
+            'Auto -',
             'Filter Results',
             'FLAC',
             'Library',
             'LOSSLESS',
             'TODO_',
-            'Auto -',
+            'TO_PROCESS',
             'i_1',
             'i_2',
         ]

@@ -236,12 +236,13 @@ class PlaylistManager:
 
     DEFAULT_DENY_LIST = [
         'ALAC',
+        'Auto -',
         'Filter Results',
         'FLAC',
         'Library',
         'LOSSLESS',
         'TODO',
-        'Auto -',
+        'TO_PROCESS'
         'i_1',
         'i_2',
     ]
