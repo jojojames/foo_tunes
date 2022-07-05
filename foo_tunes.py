@@ -245,7 +245,7 @@ class PlaylistManager:
         'FLAC',
         'Library',
         'LOSSLESS',
-        'TODO_',
+        'TODO',
         'Auto -',
         'i_1',
         'i_2',
