@@ -494,47 +494,23 @@ class GenreChanger():
         if not genre:
             return None
 
-        ALTERNATIVE_ROCK = "Alternative Rock"
-        CPOP = "C-Pop"
-        HIPHOP = "Hip-Hop"
-        JPOP = "J-Pop"
-        KPOP = "K-Pop"
-        OST = "OST"
-        ROCK = "Rock"
-        VPOP = "V-Pop"
-        dictionary: Dict = {
-            "alternrock": ALTERNATIVE_ROCK,
-            "c-pop": CPOP,
-            "cpop": CPOP,
-            "chinese-pop": CPOP,
-            "chinesepop": CPOP,
-            "chinese": CPOP,
-            "mandarin": CPOP,
-            "cantonese": CPOP,
-            "j-pop": JPOP,
-            "jpop": JPOP,
-            "japanese-pop": JPOP,
-            "japanesepop": JPOP,
-            "japanese": JPOP,
-            "k-pop": KPOP,
-            "kpop": KPOP,
-            "korean-pop": KPOP,
-            "koreanpop": KPOP,
-            "korean": KPOP,
-            "rap": HIPHOP,
-            "rock": ROCK,
-            "soundtrack": OST,
-            "v-pop": VPOP,
-            "vpop": VPOP,
-            "vietnamese-pop": VPOP,
-            "vietnamesepop": VPOP,
-            "vietnamese": VPOP,
+        patterns: Dict = {
+            '(alternrock)': 'Alternative Rock',
+            '(kpop|k-pop|korean)': 'K-Pop',
+            '(cpop|c-pop|chinese|cantonese|mandarin)': 'C-Pop',
+            '(jpop|j-pop|japanese)': 'J-Pop',
+            '(rap)': 'Hip-Hop',
+            '(rock)': 'Rock',
+            '(soundtrack)': 'OST',
+            '(vpop|v-pop|vietnamese)': 'V-Pop'
         }
 
-        if genre.lower() in dictionary:
-            return dictionary[genre.lower()]
-        else:
-            return genre
+        for k, v in patterns.items():
+            pattern = re.compile(k)
+            if re.search(pattern, genre.lower()):
+                return v
+
+        return genre
 
     def convert_worker(self):
         while not self.thread_kill_event.is_set():
@@ -549,19 +525,18 @@ class GenreChanger():
             ffprobe.read()
 
             genre_tag = ffprobe.get_genre_tag()
-            genre = ffprobe.get_genre()
-            appropriate_genre = self.find_appropriate_genre(genre)
-
             if not genre_tag:
                 print_if(f'{music_file}: no genre tag found... skipping.')
                 continue
 
+            genre = ffprobe.get_genre()
             if not genre:
                 print_if(f'{music_file}: no genre found... skipping.')
                 continue
 
+            appropriate_genre = self.find_appropriate_genre(genre)
             if genre == appropriate_genre:
-                print_if(f'{music_file}: genre is already correct... skipping.')
+                print_if(f'{music_file}: genre {genre} is already correct... skipping.')
                 continue
 
             print_separator()
