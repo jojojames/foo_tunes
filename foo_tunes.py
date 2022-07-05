@@ -5,7 +5,7 @@ import argparse, glob, json, logging, os, platform, queue, re, subprocess, threa
 from datetime import datetime
 from functools import partial
 from pathlib import Path, PurePosixPath, PureWindowsPath
-from shutil import which, move
+from shutil import move, rmtree, which
 from typing import Any, Dict, List, Optional, Text
 from watchdog.observers import Observer
 from watchdog.events import FileSystemEventHandler
@@ -188,6 +188,11 @@ def delete_some_trash(directory: str) -> None:
         if re.search(resilio_trash_pattern, f):
             print_if(f'Deleting trash {f}...')
             os.remove(f)
+
+def delete_directory_if_exists(directory: str) -> None:
+    if os.path.exists(directory):
+        print_if(f'Deleting directory {directory}...')
+        rmtree(directory)
 
 def print_separator() -> None:
     if VERBOSE:
@@ -751,7 +756,7 @@ class JojoMusicManager:
     def convert_playlists(self):
         start = time.process_time()
         # Modify Foobar2000 m3u playlists with .flac entries to .alac.
-        os.remove(self.get_alac_m3u_directory())
+        delete_directory_if_exists(self.get_alac_m3u_directory())
         self.playlist_manager.output_dir = self.get_alac_m3u_directory()
         self.playlist_manager.read()
         self.playlist_manager.convert_flac_to_alac()
@@ -759,7 +764,7 @@ class JojoMusicManager:
         self.playlist_manager.write()
 
         # Write the OSX version deriving from the current list of playlists.
-        os.remove(self.get_osx_m3u_directory())
+        delete_directory_if_exists(self.get_osx_m3u_directory())
         self.playlist_manager.output_dir = self.get_osx_m3u_directory()
         self.playlist_manager.convert_windows_to_posix()
         print_if(f'windows->posix, elapsed: {time.process_time() - start}')
@@ -774,7 +779,7 @@ class JojoMusicManager:
         self.playlist_manager.write(prefix='_')
 
         # Write the FreeBSD version deriving from the current list of playlists.
-        os.remove(self.get_bsd_m3u_directory())
+        delete_directory_if_exists(self.get_bsd_m3u_directory())
         self.playlist_manager.output_dir = self.get_bsd_m3u_directory()
         self.playlist_manager.convert_from_str_to_str(
             from_str=r'/Users/james/Music', to_str=r'/bebe/music')
