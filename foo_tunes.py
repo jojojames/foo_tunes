@@ -151,7 +151,8 @@ def get_playlist_write_path(m3u_output_dir: str,
         base_name = prefix + base_name
 
     if m3u_output_dir:
-        playlist_path = os.path.normpath(os.path.join(m3u_output_dir, base_name))
+        playlist_path = os.path.normpath(os.path.join(m3u_output_dir,
+                                                      base_name))
     else:
         playlist_path = os.path.normpath(os.path.join(os.path.dirname(file),
                                                       base_name))
@@ -180,8 +181,8 @@ def temp_path_from_path(path: str) -> Text:
 def walk_files(directory: str) -> List[str]:
     # https://stackoverflow.com/questions/19309667/recursive-os-listdir
     return [os.path.join(dp, f)
-                 for dp, dn, fn in os.walk(os.path.expanduser(directory))
-                 for f in fn]
+            for dp, dn, fn in os.walk(os.path.expanduser(directory))
+            for f in fn]
 
 
 def find_all_music_files(directory: str) -> List[str]:
@@ -221,7 +222,7 @@ def delete_directory_if_exists(directory: str) -> None:
 
 def print_separator() -> None:
     if VERBOSE:
-        print('---------------------------------------------------------------')
+        print('--------------------------------------------------------------')
 
 
 def print_json(obj) -> None:
@@ -240,6 +241,7 @@ def print_process_output(process, prefix: str) -> None:
 
 class Playlist:
     """Class representing an m3u playlist."""
+
     def __init__(self, file: str):
         self.file = file
         self.songs = None
@@ -405,7 +407,7 @@ class FlacToAlacConverter:
         while not self.thread_kill_event.is_set():
             try:
                 flac_path, alac_path = self.queue.get_nowait()
-            except:
+            except Exception:
                 # Loop exits here when all threads exhaust self.queue.
                 print('Exiting worker thread...')
                 break
@@ -442,10 +444,10 @@ class FlacToAlacConverter:
                     ['ffmpeg',
                      # https://superuser.com/questions/326629/how-can-i-make-ffmpeg-be-quieter-less-verbose
                      '-v', 'info' if VERBOSE else 'warning',
-                     '-i', flac_path, # input file
-                     '-acodec', 'alac', # 'force audio codec' to alac
-                     '-vcodec', 'copy', # 'force video codec' to copy stream
-                     alac_path], # 'output file'
+                     '-i', flac_path,  # input file
+                     '-acodec', 'alac',  # 'force audio codec' to alac
+                     '-vcodec', 'copy',  # 'force video codec' to copy stream
+                     alac_path],  # 'output file'
                     # https://stackoverflow.com/questions/41171791/how-to-suppress-or-capture-the-output-of-subprocess-run
                     capture_output=True, text=True)
 
@@ -542,7 +544,7 @@ class FFProbe():
                 print_if(f'{self.input_file}:')
                 print_json(tags)
                 print_separator()
-        except:
+        except Exception:
             print('Exception calling ffprobe...')
             traceback.print_exc()
 
@@ -586,7 +588,7 @@ class GenreChanger():
         while not self.thread_kill_event.is_set():
             try:
                 music_file = self.queue.get_nowait()
-            except:
+            except Exception:
                 # Loop exits here when all threads exhaust self.queue.
                 print('Exiting worker thread...')
                 break
@@ -606,7 +608,8 @@ class GenreChanger():
 
             appropriate_genre = self.find_appropriate_genre(genre)
             if genre == appropriate_genre:
-                print_if(f'{music_file}: genre {genre} is already correct... skipping.')
+                print_if(f'{music_file}: genre {genre} is already correct...'
+                         ' skipping.')
                 continue
 
             print_separator()
@@ -626,7 +629,7 @@ class GenreChanger():
                         'mp4tags',
                         '-genre',
                         appropriate_genre,
-                        music_file # mp4tags can edit in place!
+                        music_file  # mp4tags can edit in place!
                     ], capture_output=True, text=True)
                     print_process_output(process, 'mp4tags')
                 else:
@@ -652,7 +655,7 @@ class GenreChanger():
                                              text=True)
 
                     # Then move the temp file...
-                    print_if(f'Removing {music_file}... ' )
+                    print_if(f'Removing {music_file}... ')
                     os.remove(music_file)
                     print_if(f'Moving {temp_path} to {music_file}...')
                     move(temp_path, music_file)
@@ -705,8 +708,8 @@ class WatchHandler(FileSystemEventHandler):
     def __init__(self, fn, ob_name: str, delay: int = 120,):
         self.fn = fn
         # Two minutes by default.
-        # Recommend to use a higher delay for more stability and a lower delay for
-        # more responsiveness.
+        # Recommend to use a higher delay for more stability and a lower delay
+        # for more responsiveness.
         self.delay = delay
         self.timer: threading.Timer = None
         self.ob_name = ob_name
@@ -813,7 +816,7 @@ class JojoMusicManager:
         # Prefix the playlist with _ to get it sorted to the top.
         self.playlist_manager.write(prefix='_')
 
-        # Write the FreeBSD version deriving from the current list of playlists.
+        # Write the FreeBSD version deriving from the current set of playlists.
         delete_directory_if_exists(self.get_bsd_m3u_directory())
         self.playlist_manager.output_dir = self.get_bsd_m3u_directory()
         self.playlist_manager.convert_from_str_to_str(
@@ -894,7 +897,7 @@ class JojoMusicManager:
                          delay=self.args.watch_playlist_delay),
             self.get_windows_m3u_directory(),
             recursive=False)
-        print_if(f'Will start observer with name: Playlist Observer...')
+        print_if('Will start observer with name: Playlist Observer...')
         self.observers.append(self.playlist_observer)
 
         self.converter_observer = Observer()
@@ -904,7 +907,7 @@ class JojoMusicManager:
                          delay=self.args.watch_convert_delay),
             self.get_flac_directory(),
             recursive=False)
-        print_if(f'Will start observer with name: FLAC Observer...')
+        print_if('Will start observer with name: FLAC Observer...')
         self.observers.append(self.converter_observer)
 
         for observer in self.observers:
@@ -938,8 +941,8 @@ class MusicManager:
 
     def run(self):
         if (not self.args.m3u_flac_to_alac and
-            not self.args.m3u_windows_to_posix and
-            not self.args.flac_dir):
+                not self.args.m3u_windows_to_posix and
+                not self.args.flac_dir):
             print('Need to specify action... e.g. --m3u_flac_to_alac')
             return
         self.convert_playlists()
@@ -955,7 +958,7 @@ class MusicManager:
         m3u_output_dir = self.args.m3u_output_dir
 
         if (m3u_flac_to_alac or m3u_windows_to_posix or
-            (m3u_from_str and m3u_to_str)):
+                (m3u_from_str and m3u_to_str)):
             if not m3u_input_dir:
                 print('Specify --m3u_input_dir...')
                 return
@@ -1013,7 +1016,7 @@ class MusicManager:
             converter.write()
 
             if self.args.change_genres:
-                genre_changer = GenreChanger(args.flac_dir)
+                genre_changer = GenreChanger(self.args.flac_dir)
                 genre_changer.read()
                 genre_changer.write()
 
@@ -1037,7 +1040,7 @@ class MusicManager:
                              delay=self.args.watch_playlist_delay),
                 true_path(self.args.m3u_input_dir),
                 recursive=False)
-            print_if(f'Will start observer with name: Playlist Observer...')
+            print_if('Will start observer with name: Playlist Observer...')
             self.observers.append(self.playlist_observer)
 
         if self.args.flac_watch:
@@ -1048,7 +1051,7 @@ class MusicManager:
                              delay=self.args.watch_convert_delay),
                 true_path(self.args.flac_dir),
                 recursive=False)
-            print_if(f'Will start observer with name: FLAC Observer...')
+            print_if('Will start observer with name: FLAC Observer...')
             self.observers.append(self.converter_observer)
 
         if len(self.observers) == 0:
@@ -1076,12 +1079,13 @@ class MusicManager:
 
 
 def main():
-    global DRY, FFMPEG_AVAILABLE, METAFLAC_AVAILABLE, MP4TAGS_AVAILABLE, VERBOSE, XLD_AVAILABLE
+    global DRY, FFMPEG_AVAILABLE, METAFLAC_AVAILABLE, MP4TAGS_AVAILABLE, \
+        VERBOSE, XLD_AVAILABLE
     args = parser.parse_args()
     VERBOSE = args.verbose or args.jojo
     DRY = args.dry
 
-    XLD_AVAILABLE = which('xld') # OSX Only
+    XLD_AVAILABLE = which('xld')  # OSX Only
     FFMPEG_AVAILABLE = which('ffmpeg')
     MP4TAGS_AVAILABLE = which('mp4tags')
     METAFLAC_AVAILABLE = which('metaflac')
@@ -1100,6 +1104,7 @@ def main():
     else:
         music_manager = MusicManager(args)
         music_manager.run()
+
 
 if __name__ == '__main__':
     main()
