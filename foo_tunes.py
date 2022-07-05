@@ -1,6 +1,7 @@
 #!/usr/bin/python3
 
-import argparse, glob, json, logging, os, platform, queue, re, subprocess, threading, time, traceback
+import argparse, glob, json, logging, os, platform, queue, re, subprocess, \
+    threading, time, traceback
 
 from datetime import datetime
 from functools import partial

@@ -1,10 +1,10 @@
-import os
+import json, os
 import foo_tunes
 import unittest
 
 from pathlib import Path
 
-from foo_tunes import Playlist, PlaylistManager, Resilio
+from foo_tunes import FFProbe, Playlist, PlaylistManager, Resilio
 
 
 class FooTunesTest(unittest.TestCase):
@@ -110,6 +110,96 @@ class FooTunesTest(unittest.TestCase):
 
         # Assert trash has been deleted.
         self.assertEqual(len(os.listdir(flac_dir)), 1)
+
+
+class FFProbeTest(unittest.TestCase):
+
+    # Generated with:
+    # ffprobe testdata/music/sample-3s.mp3 -v quiet -print_format json \
+    # -show_format -show_streams -hide_banner
+    FFPROBE_RESULT = '''
+{
+    "streams": [
+        {
+            "index": 0,
+            "codec_name": "mp3",
+            "codec_long_name": "MP3 (MPEG audio layer 3)",
+            "codec_type": "audio",
+            "codec_tag_string": "[0][0][0][0]",
+            "codec_tag": "0x0000",
+            "sample_fmt": "fltp",
+            "sample_rate": "44100",
+            "channels": 2,
+            "channel_layout": "stereo",
+            "bits_per_sample": 0,
+            "r_frame_rate": "0/0",
+            "avg_frame_rate": "0/0",
+            "time_base": "1/14112000",
+            "start_pts": 353600,
+            "start_time": "0.025057",
+            "duration_ts": 45711360,
+            "duration": "3.239184",
+            "bit_rate": "128000",
+            "disposition": {
+                "default": 0,
+                "dub": 0,
+                "original": 0,
+                "comment": 0,
+                "lyrics": 0,
+                "karaoke": 0,
+                "forced": 0,
+                "hearing_impaired": 0,
+                "visual_impaired": 0,
+                "clean_effects": 0,
+                "attached_pic": 0,
+                "timed_thumbnails": 0,
+                "captions": 0,
+                "descriptions": 0,
+                "metadata": 0,
+                "dependent": 0,
+                "still_image": 0
+            },
+            "tags": {
+                "encoder": "Lavc57.10"
+            }
+        }
+    ],
+    "format": {
+        "filename": "sample-3s.mp3",
+        "nb_streams": 1,
+        "nb_programs": 0,
+        "format_name": "mp3",
+        "format_long_name": "MP2/3 (MPEG audio layer 2/3)",
+        "start_time": "0.025057",
+        "duration": "3.239184",
+        "size": "52304",
+        "bit_rate": "129178",
+        "probe_score": 51,
+        "tags": {
+            "genre": "Test",
+            "encoder": "Lavf59.16.100"
+        }
+    }
+}
+    '''
+
+    def test_get_genre(self):
+        music_file = os.path.join(os.path.dirname(__file__),
+                                  'testdata/music/sample-3s.mp3')
+        probe = FFProbe(input_file=music_file)
+        # Don't actually process the file, load a string already generated
+        # from the same file instead to avoid the call to ffprobe.
+        probe.result = json.loads(FFProbeTest.FFPROBE_RESULT)
+        self.assertEqual(probe.get_genre(), 'Test')
+
+    def test_get_genre_tag(self):
+        music_file = os.path.join(os.path.dirname(__file__),
+                                  'testdata/music/sample-3s.mp3')
+        probe = FFProbe(input_file=music_file)
+        # Don't actually process the file, load a string already generated
+        # from the same file instead to avoid the call to ffprobe.
+        probe.result = json.loads(FFProbeTest.FFPROBE_RESULT)
+        self.assertEqual(probe.get_genre_tag(), 'genre')
 
 
 class PlaylistManagerTest(unittest.TestCase):
