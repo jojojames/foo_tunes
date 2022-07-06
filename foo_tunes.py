@@ -841,14 +841,14 @@ class JojoMusicManager:
             print(f'{flac_dir} does not exist. Skipping convert and move...')
             return
 
+        if self.resilio.syncing():
+            print('Resilio syncing... Skipping flac conversion...')
+            return
+
         # Get list of directories to move that aren't hidden.
         music_dirs = [f for f in os.listdir(flac_dir) if not f.startswith('.')]
         if len(music_dirs) == 0:
             print('No music directories to convert or move. Skipping.')
-            return
-
-        if self.resilio.syncing():
-            print('Resilio syncing... Skipping flac conversion...')
             return
 
         # Attempt to convert FLACs to ALACs.
@@ -869,10 +869,6 @@ class JojoMusicManager:
         except Exception:
             print('Exception while converting music...')
             traceback.print_exc()
-
-        if self.resilio.syncing():
-            print('Resilio syncing... Skipping music move...')
-            return
 
         try:
             # Move music to Music directory.
