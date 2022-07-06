@@ -1102,6 +1102,7 @@ def main():
     if args.clean_up:
         print(f'Cleaning up {args.clean_up}')
         delete_some_trash(args.clean_up)
+        return
 
     if args.jojo:
         music_manager = JojoMusicManager(args)
