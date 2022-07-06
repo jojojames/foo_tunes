@@ -80,6 +80,27 @@ class FooTunesTest(unittest.TestCase):
             foo_tunes.temp_path_from_path('/a/b/c/abc.mp3'),
             '/a/b/c/abc_temp.mp3')
 
+    def test_find_flac_files(self):
+        temp_dir = os.path.join(os.path.dirname(__file__), 'testdata/temp_dir')
+        os.mkdir(temp_dir)
+
+        files = [
+            os.path.join(temp_dir, 'a.mp3'),
+            os.path.join(temp_dir, 'a.flac'),
+            os.path.join(temp_dir, 'a.m4a'),
+            os.path.join(temp_dir, 'a.not')
+        ]
+
+        for file in files:
+            with open(file, 'w') as f:
+                f.write('Create a new text file!')
+
+        # One flac file is in the list of four.
+        self.assertEqual(len(foo_tunes.find_flac_files(temp_dir)), 1)
+
+        # Clean up test directory.
+        shutil.rmtree(temp_dir)
+
     def test_find_all_music_files(self):
         temp_dir = os.path.join(os.path.dirname(__file__), 'testdata/temp_dir')
         os.mkdir(temp_dir)

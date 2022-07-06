@@ -185,6 +185,19 @@ def walk_files(directory: str) -> List[str]:
             for f in fn]
 
 
+def find_flac_files(directory: str) -> List[str]:
+    files = walk_files(directory)
+
+    flac_pattern = re.compile(r'.flac$', re.IGNORECASE)
+    flac_files = []
+    for f in files:
+        if re.search(flac_pattern, f):
+            flac_files.append(f)
+
+    print_if(f'Found flac files: {flac_files}')
+    return flac_files
+
+
 def find_all_music_files(directory: str) -> List[str]:
     files = walk_files(directory=directory)
 
@@ -390,13 +403,7 @@ class FlacToAlacConverter:
         # Clean up trash first...
         delete_some_trash(self.input_dir)
 
-        files = walk_files(self.input_dir)
-
-        flac_pattern = re.compile('\.flac$', re.IGNORECASE)
-        flac_files = []
-        for f in files:
-            if re.search(flac_pattern, f):
-                flac_files.append(f)
+        flac_files = find_flac_files(self.input_dir)
 
         print_separator()
         print_if(f'# of Flac files to convert: {len(flac_files)}')
