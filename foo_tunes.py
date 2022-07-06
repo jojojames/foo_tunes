@@ -86,8 +86,18 @@ parser.add_argument(
     help='If set, watch input directory for flac changes and automatically '
     'convert flacs in that directory using the related -flac flags.')
 
+parser.add_argument('--flac_change_genres', default=False, action='store_true',
+                    help='If set, tweak genre tags to a common set of tags'
+                    ' after converting encoding music files. Genres tagged '
+                    ' will be the list of music files in --flac_dir, even'
+                    ' if the file isn\' a FLAC file.')
+
+# Changing Metadata / Tags
+
 parser.add_argument('--change_genres', default=False, action='store_true',
-                    help='If set, tweak genre tags to a common set of tags.')
+                    help='If set, tweak genre tags to a common set of tags'
+                    ' in --flac_dir. If this is set, changing tags is the '
+                    ' only thing this utility does.')
 
 # Watching for Changes
 
@@ -1020,7 +1030,7 @@ class MusicManager:
             converter.read()
             converter.write()
 
-            if self.args.change_genres:
+            if self.args.flac_change_genres:
                 genre_changer = GenreChanger(self.args.flac_dir)
                 genre_changer.read()
                 genre_changer.write()
@@ -1098,6 +1108,12 @@ def main():
     print_separator()
     print_if(args)
     print_separator()
+
+    if args.change_genres:
+        g = GenreChanger(input_dir=args.flac_dir)
+        g.read()
+        g.write()
+        return
 
     if args.clean_up:
         print(f'Cleaning up {args.clean_up}')
