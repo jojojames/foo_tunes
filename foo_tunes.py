@@ -357,12 +357,14 @@ class Resilio:
         """Returns whether or not Resilio is currently syncing."""
         files = os.listdir(self.get_temp_directory())
 
-        sync_pattern = re.compile('\!\.sync$')
+        sync_pattern = re.compile(r'!.sync$')
         for file in files:
             print_if(f'Looking for sync pattern in {file}...')
             if re.search(sync_pattern, file):
                 print_if(f'Found sync pattern {file}')
                 return True
+            else:
+                print_if(f'Not a sync pattern {file}')
 
         return False
 

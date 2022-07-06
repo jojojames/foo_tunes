@@ -326,13 +326,20 @@ class ResilioTest(unittest.TestCase):
         resilio: Resilio = Resilio(sync_dir=sync_dir)
         self.assertFalse(resilio.syncing())
 
+        not_sync_file = os.path.join(sync_dir, '.sync/abc.sync')
+        with open(not_sync_file, 'w') as f:
+            f.write('Create a new text file!')
+
+        self.assertFalse(resilio.syncing())
+
         sync_file = os.path.join(sync_dir, '.sync/abc.!.sync')
         with open(sync_file, 'w') as f:
             f.write('Create a new text file!')
 
         self.assertTrue(resilio.syncing())
 
-        # Clean up file that we just created.
+        # Clean up the files that we just created.
+        os.remove(not_sync_file)
         os.remove(sync_file)
 
 
