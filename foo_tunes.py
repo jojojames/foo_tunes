@@ -587,13 +587,13 @@ class GenreChanger():
 
         patterns: Dict = {
             '(alternrock)': 'Alternative Rock',
-            '(kpop|k-pop|korean)': 'K-Pop',
-            '(cpop|c-pop|chinese|cantonese|mandarin)': 'C-Pop',
-            '(jpop|j-pop|japanese)': 'J-Pop',
+            '(kpop|korean)': 'K-Pop',
+            '(cpop|chinese|cantonese|mandarin)': 'C-Pop',
+            '(jpop|japanese)': 'J-Pop',
             '(rap)': 'Hip-Hop',
-            '(rock)': 'Rock',
+            # '(rock)': 'Rock',  # Don't do, clashes with Alternative Rock.
             '(soundtrack)': 'OST',
-            '(vpop|v-pop|vietnamese)': 'V-Pop'
+            '(vpop|vietnamese)': 'V-Pop'
         }
 
         for k, v in patterns.items():
@@ -601,7 +601,11 @@ class GenreChanger():
             if re.search(pattern, genre.lower()):
                 return v
 
-        return genre
+        # 'rock' -> 'Rock'
+        # 'alternative rock' -> 'Alternative Rock'
+        # 'Alternative rock' -> 'Alternative Rock'
+        # 'Hip-hop' -> 'Hip-Hop'
+        return genre.lower().title()
 
     def convert_worker(self):
         while not self.thread_kill_event.is_set():

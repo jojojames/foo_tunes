@@ -6,7 +6,7 @@ import unittest
 
 from pathlib import Path
 
-from foo_tunes import FFProbe, Playlist, PlaylistManager, Resilio
+from foo_tunes import FFProbe, GenreChanger, Playlist, PlaylistManager, Resilio
 
 
 class FooTunesTest(unittest.TestCase):
@@ -244,6 +244,27 @@ class FFProbeTest(unittest.TestCase):
         # from the same file instead to avoid the call to ffprobe.
         probe.result = json.loads(FFProbeTest.FFPROBE_RESULT)
         self.assertEqual(probe.get_genre_tag(), 'genre')
+
+
+class GenreChangerTest(unittest.TestCase):
+    def test_find_appropriate_genre(self):
+        g = GenreChanger(input_dir='unused')
+        self.assertEqual(g.find_appropriate_genre('AlternRock'),
+                         'Alternative Rock')
+        self.assertEqual(g.find_appropriate_genre('soundtrack'),
+                         'OST')
+        self.assertEqual(g.find_appropriate_genre('rock'),
+                         'Rock')
+        self.assertEqual(g.find_appropriate_genre('alternative rock'),
+                         'Alternative Rock')
+        self.assertEqual(g.find_appropriate_genre('Alternative rock'),
+                         'Alternative Rock')
+        self.assertEqual(g.find_appropriate_genre('Hip-hop'),
+                         'Hip-Hop')
+        self.assertEqual(g.find_appropriate_genre('j-pop'),
+                         'J-Pop')
+        self.assertEqual(g.find_appropriate_genre('k-pop'),
+                         'K-Pop')
 
 
 class PlaylistManagerTest(unittest.TestCase):
