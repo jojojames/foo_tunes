@@ -874,7 +874,7 @@ class JojoMusicManager:
                 os.makedirs(move_to)
 
             print_if(f'Music directories to move {music_dirs}')
-            ds_store_pattern = re.compile('\.DS_Store')
+            ds_store_pattern = re.compile(r'.DS_Store')
             for music_dir in music_dirs:
                 if re.search(ds_store_pattern, music_dir):
                     continue
