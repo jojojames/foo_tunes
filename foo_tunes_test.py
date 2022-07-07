@@ -288,6 +288,7 @@ class PlaylistManagerTest(unittest.TestCase):
                             deny_list=deny_list)
 
         deny_playlists = [
+            '/Volumes/bebe/playlists/windows/TO_PROCESS.m3u8',
             '/Volumes/bebe/playlists/windows/_TO_PROCESS.m3u8',
             '/Volumes/bebe/playlists/windows/ALAC.m3u8',
             '/Volumes/bebe/playlists/windows/Auto - Most Played.m3u8',

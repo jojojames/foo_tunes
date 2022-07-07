@@ -308,7 +308,7 @@ class PlaylistManager:
         'LOSSLESS',
         'LOSSY',
         'TODO',
-        'TO_PROCESS'
+        'TO_PROCESS',
         'i_1',
         'i_2',
     ]
