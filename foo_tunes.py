@@ -196,6 +196,7 @@ def walk_files(directory: str) -> List[str]:
 
 
 def find_flac_files(directory: str) -> List[str]:
+    print_if(f'Looking for flac files in directory: {directory}...')
     files = walk_files(directory)
 
     flac_pattern = re.compile(r'.flac$', re.IGNORECASE)
@@ -209,6 +210,7 @@ def find_flac_files(directory: str) -> List[str]:
 
 
 def find_all_music_files(directory: str) -> List[str]:
+    print_if(f'Looking for music files in directory: {directory}...')
     files = walk_files(directory=directory)
 
     music_pattern = re.compile(r'(.flac$|.mp3$|.m4a$)', re.IGNORECASE)
