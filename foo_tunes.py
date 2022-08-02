@@ -787,7 +787,7 @@ class JojoMusicManager:
     def get_bsd_m3u_directory(self):
         return os.path.join(self.get_playlist_directory(), 'bsd')
 
-    def get_sync_directory(self):
+    def get_sync_directory(self) -> str:
         if platform.system() == 'Windows':
             return r'X:\sync'
         if platform.system() == 'Darwin':
@@ -795,7 +795,7 @@ class JojoMusicManager:
         if platform.system() == 'FreeBSD':
             return r'/bebe/sync'
 
-    def get_flac_directory(self):
+    def get_flac_directory(self) -> str:
         if platform.system() == 'Windows':
             return r'X:\sync\flacsfor.me'
         if platform.system() == 'Darwin':
@@ -803,7 +803,7 @@ class JojoMusicManager:
         if platform.system() == 'FreeBSD':
             return r'/bebe/sync/flacsfor.me'
 
-    def get_music_directory(self):
+    def get_music_directory(self) -> str:
         if platform.system() == 'Windows':
             return r'X:\music'
         if platform.system() == 'Darwin':
