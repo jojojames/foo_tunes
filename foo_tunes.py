@@ -767,11 +767,6 @@ class JojoMusicManager:
             input_dir=self.get_windows_m3u_directory(),
             output_dir=self.get_alac_m3u_directory())
 
-        self.converter = FlacToAlacConverter(
-            input_dir=self.get_flac_directory(),
-            overwrite_output=True,
-            delete_original=True)
-
     def get_playlist_directory(self):
         if platform.system() == 'Windows':
             return r'X:\playlists'
@@ -870,6 +865,10 @@ class JojoMusicManager:
         # Attempt to convert FLACs to ALACs.
         print('Attempting flac conversion...')
         try:
+            self.converter = FlacToAlacConverter(
+                input_dir=self.get_flac_directory(),
+                overwrite_output=True,
+                delete_original=True)
             self.converter.read()
             self.converter.write()
             print('Finished converting...')
