@@ -865,20 +865,20 @@ class JojoMusicManager:
         # Attempt to convert FLACs to ALACs.
         print('Attempting flac conversion...')
         try:
-            self.converter = FlacToAlacConverter(
-                input_dir=self.get_flac_directory(),
+            converter = FlacToAlacConverter(
+                input_dir=flac_dir,
                 overwrite_output=True,
                 delete_original=True)
-            self.converter.read()
-            self.converter.write()
+            converter.read()
+            converter.write()
             print('Finished converting...')
             genre_changer = GenreChanger(flac_dir)
             genre_changer.read()
             genre_changer.write()
             print('Finished tagging...')
         except KeyboardInterrupt:
-            if self.converter:
-                self.converter.thread_kill_event.set()
+            if converter:
+                converter.thread_kill_event.set()
 
             print('Done...')
         except Exception:
