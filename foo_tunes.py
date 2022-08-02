@@ -795,13 +795,19 @@ class JojoMusicManager:
         if platform.system() == 'FreeBSD':
             return r'/bebe/sync'
 
-    def get_flac_directory(self) -> str:
+    def get_flac_directories(self) -> List[str]:
         if platform.system() == 'Windows':
-            return r'X:\sync\flacsfor.me'
+            return [r'X:\sync\flacsfor.me',
+                    r'X:\sync\jpopsuki.eu',
+                    r'X:\sync\sugoimusic.me']
         if platform.system() == 'Darwin':
-            return r'/Volumes/bebe/sync/flacsfor.me'
+            return [r'/Volumes/bebe/sync/flacsfor.me',
+                    r'/Volumes/bebe/sync/jpopsuki.eu',
+                    r'/Volumes/bebe/sync/sugoimusic.me']
         if platform.system() == 'FreeBSD':
-            return r'/bebe/sync/flacsfor.me'
+            return [r'/bebe/sync/flacsfor.me',
+                    r'/bebe/sync/jpopsuki.eu',
+                    r'/bebe/sync/sugoimusic.me']
 
     def get_music_directory(self) -> str:
         if platform.system() == 'Windows':
@@ -847,6 +853,7 @@ class JojoMusicManager:
         self.playlist_manager.write()
 
     def convert_and_move_flacs(self, flac_dir: str):
+        print_if(f'Starting convert process for {flac_dir}...')
         if not os.path.exists(flac_dir):
             print(f'{flac_dir} does not exist. Skipping convert and move...')
             return
@@ -919,19 +926,20 @@ class JojoMusicManager:
         print_if('Will start observer with name: Playlist Observer...')
         self.observers.append(self.playlist_observer)
 
-        # Create partial function with flac_dir set.
-        convert_fn = partial(self.convert_and_move_flacs,
-                             flac_dir=self.get_flac_directory())
-
-        self.converter_observer = Observer()
-        self.converter_observer.schedule(
-            WatchHandler(fn=convert_fn,
-                         ob_name='FLAC Observer',
-                         delay=self.args.watch_convert_delay),
-            self.get_flac_directory(),
-            recursive=False)
-        print_if('Will start observer with name: FLAC Observer...')
-        self.observers.append(self.converter_observer)
+        for directory in self.get_flac_directories():
+            # Create partial function with flac_dir set.
+            convert_fn = partial(self.convert_and_move_flacs,
+                                 flac_dir=directory)
+            observer_name = f'FLAC Observer: {directory}'
+            converter_observer = Observer()
+            converter_observer.schedule(
+                WatchHandler(fn=convert_fn,
+                             ob_name=observer_name,
+                             delay=self.args.watch_convert_delay),
+                directory,
+                recursive=False)
+            print_if(f'Will start observer with name: {observer_name}...')
+            self.observers.append(converter_observer)
 
         for observer in self.observers:
             observer.start()
@@ -954,7 +962,8 @@ class JojoMusicManager:
 
     def run(self):
         self.convert_playlists()
-        self.convert_and_move_flacs(flac_dir=self.get_flac_directory())
+        for directory in self.get_flac_directories():
+            self.convert_and_move_flacs(flac_dir=directory)
         self.setup_file_watchers()
 
 
