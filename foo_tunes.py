@@ -369,6 +369,10 @@ class PlaylistManager:
         for playlist in self.playlists:
             playlist.songs = list(map(from_str_to_str_fn, playlist.songs))
 
+    def reverse_playlist(self):
+        for playlist in self.playlists:
+            playlist.songs.reverse()
+
 
 class Resilio:
     def __init__(self, sync_dir: str):
@@ -823,6 +827,7 @@ class JojoMusicManager:
         delete_directory_if_exists(self.get_alac_m3u_directory())
         self.playlist_manager.output_dir = self.get_alac_m3u_directory()
         self.playlist_manager.read()
+        self.playlist_manager.reverse_playlist()
         self.playlist_manager.convert_flac_to_alac()
         print_if(f'flac->alac, elapsed: {time.process_time() - start}')
         self.playlist_manager.write()
