@@ -1,6 +1,6 @@
 #!/usr/local/bin/bash
 
-PATH=/usr/local/bin
+PATH=/usr/local/go/bin:/usr/local/opt/python/libexec/bin:/usr/local/bin:/usr/local/sbin:/opt/local/bin:/opt/local/sbin:/sbin:/usr/sbin:/sbin:/bin:/usr/sbin:/usr/bin:/usr/local/sbin:/usr/local/bin
 
 if ! tmux has-session -t footunes 2>/dev/null; then
     # https://stackoverflow.com/questions/25207909/tmux-open-terminal-failed-not-a-terminal
