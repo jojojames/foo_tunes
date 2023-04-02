@@ -932,6 +932,7 @@ class JojoMusicManager:
         self.observers.append(self.playlist_observer)
 
         for directory in self.get_flac_directories():
+            Path(directory).mkdir(exist_ok=True, parents=True)
             # Create partial function with flac_dir set.
             convert_fn = partial(self.convert_and_move_flacs,
                                  flac_dir=directory)
