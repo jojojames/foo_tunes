@@ -824,7 +824,16 @@ class JojoMusicManager:
         if platform.system() == 'FreeBSD':
             return r'/bebe/music'
 
+    def get_workspace_process_directory(self) -> str:
+        if platform.system() == 'Windows':
+            return r'X:\workspace'
+        if platform.system() == 'Darwin':
+            return r'/Volumes/bebe/workspace'
+        if platform.system() == 'FreeBSD':
+            return r'/bebe/workspace'
+
     def convert_playlists(self):
+        print_if('Starting to convert playlists...')
         start = time.process_time()
         # Modify Foobar2000 m3u playlists with .flac entries to .alac.
         delete_directory_if_exists(self.get_alac_m3u_directory())
@@ -842,8 +851,8 @@ class JojoMusicManager:
         print_if(f'windows->posix, elapsed: {time.process_time() - start}')
 
         self.playlist_manager.convert_from_str_to_str(
-            from_str=r'X:/music', to_str=r'/Users/james/Music')
-        print_if(f'X:/music->/Users/james/Music, elapsed: '
+            from_str=r'C:\Users\james\Music', to_str=r'/Users/james/Music')
+        print_if(f'C:\\Users\\james\\Music->/Users/james/Music, elapsed: '
                  f'{time.process_time() - start}')
 
         # Apple Music has random playlists loaded from Music Library.
@@ -901,7 +910,8 @@ class JojoMusicManager:
 
         try:
             # Move music to Music directory.
-            move_to = os.path.join(self.get_music_directory(), '_TO_PROCESS')
+            move_to = os.path.join(self.get_workspace_process_directory(),
+                                   '_TO_PROCESS')
             if not os.path.exists(move_to):
                 os.makedirs(move_to)
 
