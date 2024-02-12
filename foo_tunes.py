@@ -335,6 +335,9 @@ class PlaylistManager:
         playlist_glob = os.path.join(self.input_dir, '*.m3u8')
         print_if(f'Globbing for: {playlist_glob}')
 
+        # Reset in case we're reading again.
+        self.playlists = []
+
         playlist_files = glob.glob(playlist_glob)
         for playlist_file in playlist_files:
             playlist: Playlist = Playlist(playlist_file)
