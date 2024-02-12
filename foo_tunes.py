@@ -858,7 +858,7 @@ class JojoMusicManager:
         self.playlist_manager.write()
 
     def convert_and_move_flacs(self, flac_dir: str):
-        print_if(f'Starting convert process for {flac_dir}...')
+        print(f'Starting convert process for {flac_dir}...')
         if not os.path.exists(flac_dir):
             print(f'{flac_dir} does not exist. Skipping convert and move...')
             return
