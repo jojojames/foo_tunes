@@ -298,6 +298,12 @@ location.
 #+begin_src text :tangle yes
   %genre%/%album artist%/%album%/%tracknumber% %title%
 #+end_src
+** Shokz OpenSwim
+#+begin_src text :tangle yes
+%genre%_%album_artist%_%album%_%tracknumber%_%title%
+#+end_src
+
+Uncheck Copy entire source folder content
 
 ** Playback Statistics
 Write statistics to file tags.
